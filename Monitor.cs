@@ -19,7 +19,7 @@ public record Snapshot(Gpu? Gpu, double CpuPct, double RamUsedGb, double RamTota
 public static class Monitor
 {
     public const string Root = @"D:\localai";
-    public const string LlmUrl = "http://127.0.0.1:8080";
+    public static readonly string LlmUrl = LlmConfig.HealthUrl; // llm.json can point it at another machine
     public const string LlmBat = Root + @"\serve-th.bat";
     public const string LlmLog = Root + @"\logs\llama-server.log";
     public const string DistroName = "Ubuntu-24.04";
@@ -65,12 +65,12 @@ public static class Monitor
             .Select(l => l.Trim().TrimStart('*').Split(' ', StringSplitOptions.RemoveEmptyEntries))
             .Where(p => p.Length >= 2).Select(p => new Distro(p[0], p[1])).ToList();
 
-    static async Task<string?> Get(string path, bool auth, string baseUrl = LlmUrl)
+    static async Task<string?> Get(string path, bool auth, string? baseUrl = null)
     {
         try
         {
-            var req = new HttpRequestMessage(HttpMethod.Get, baseUrl + path);
-            if (auth) req.Headers.Authorization = new("Bearer", AdminKey());
+            var req = new HttpRequestMessage(HttpMethod.Get, (baseUrl ?? LlmUrl) + path);
+            if (auth && !LlmConfig.Remote) req.Headers.Authorization = new("Bearer", AdminKey()); // a remote server has its own keys
             var r = await Http.SendAsync(req);
             return r.IsSuccessStatusCode ? await r.Content.ReadAsStringAsync() : null;
         }
@@ -87,8 +87,9 @@ public static class Monitor
 
     static async Task<Llm> ReadLlm()
     {
-        bool proc = LlmProcs().Length > 0;
         var health = await Get("/health", false);
+        // remote: no process of ours to find; a healthy server counts as "running" (autostart and selftest read this flag)
+        bool proc = LlmConfig.Remote ? health != null && health.Contains("ok") : LlmProcs().Length > 0;
         if (health == null || !health.Contains("ok"))
             return new(proc, proc ? "กำลังโหลด" : "ปิดอยู่", "-", 0, 0, 0, 0, 0);
         var model = "-";
@@ -195,6 +196,7 @@ public static class Monitor
 
     public static void StartLlm()
     {
+        if (LlmConfig.Remote) throw new InvalidOperationException("LLM อยู่บนเครื่องอื่น (" + LlmUrl + ") เปิดจากแอปนี้ไม่ได้");
         Directory.CreateDirectory(Path.GetDirectoryName(LlmLog)!);
         // same .bat as a double-click; stdin is closed so its final "pause" exits when the server stops
         var psi = new ProcessStartInfo("cmd.exe", $"/s /c \"\"{LlmBat}\" > \"{LlmLog}\" 2>&1\"")
@@ -208,6 +210,7 @@ public static class Monitor
     static int wedgedChecks;
     public static async Task LlmWatchdog()
     {
+        if (LlmConfig.Remote) return; // never restart someone else's server
         var health = LlmProcs().Length > 0 ? await Get("/health", false) : null;
         if (health == null || !health.Contains("ok")) { wedgedChecks = 0; return; } // down or loading: not a wedge
         wedgedChecks = await Get("/metrics", true) == null ? wedgedChecks + 1 : 0;
@@ -220,6 +223,7 @@ public static class Monitor
 
     public static void StopLlm()
     {
+        if (LlmConfig.Remote) throw new InvalidOperationException("LLM อยู่บนเครื่องอื่น (" + LlmUrl + ") หยุดจากแอปนี้ไม่ได้");
         foreach (var p in LlmProcs()) { p.Kill(true); p.WaitForExit(10000); }
     }
 

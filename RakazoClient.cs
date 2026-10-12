@@ -86,8 +86,8 @@ static class RakazoClient
                 ["label"] = "BCAiRouter", ["reasoning"] = false,
             });
         else throw new ArgumentException("mode ต้องเป็น local, synthetic หรือ bcai");
-        var model = mode switch { "local" => "gemma4", "bcai" => BcaiModel, _ => SyntheticModel };
-        await Rpc("models/setDefault", new JsonObject { ["provider"] = "openai-compatible", ["modelId"] = model });
+        if (mode != "local") // ConnectModel already made the configured LLM (llm.json) the default
+            await Rpc("models/setDefault", new JsonObject { ["provider"] = "openai-compatible", ["modelId"] = mode == "bcai" ? BcaiModel : SyntheticModel });
         return await GetLlmMode();
     }
 
@@ -159,18 +159,25 @@ static class RakazoClient
 
     static async Task ConnectModel()
     {
-        var key = File.ReadLines(Path.Combine(Monitor.Root, "llm-api-key.txt"))
+        // llm.json may name the key; otherwise the "rakazo-" line of llm-api-key.txt (the original single-machine layout)
+        var key = LlmConfig.ApiKey ?? File.ReadLines(Path.Combine(Monitor.Root, "llm-api-key.txt"))
             .Select(l => l.Trim()).FirstOrDefault(l => l.StartsWith("rakazo-"))
             ?? throw new InvalidOperationException("ไม่พบคีย์ rakazo- ใน llm-api-key.txt");
-        await Rpc("models/connect", new JsonObject
-        {
-            ["provider"] = "openai-compatible",
-            ["baseUrl"] = "http://172.17.0.1:18080/v1", // socat bridge on docker0 -> Windows llama-server
-            ["modelId"] = "gemma4",
-            ["apiKey"] = key,
-            ["label"] = "Gemma 4 (เครื่องนี้)",
-            ["reasoning"] = false,
-        }, false);
+        // "local" = Rakazo's operator-configured provider (RAKAZO_LOCAL_MODELS/_URL/_CONTEXT_WINDOW/_MAX_TOKENS in ~/rakazo/.env):
+        // URL and token limits come from that env, so only the model id is sent. Rakazo still stores a key of 8+ characters.
+        var connect = LlmConfig.Provider == "local"
+            ? new JsonObject { ["provider"] = "local", ["modelId"] = LlmConfig.ModelId, ["apiKey"] = key, ["label"] = LlmConfig.Label }
+            : new JsonObject
+            {
+                ["provider"] = "openai-compatible",
+                ["baseUrl"] = LlmConfig.BaseUrl, // default: socat bridge on docker0 -> Windows llama-server
+                ["modelId"] = LlmConfig.ModelId,
+                ["apiKey"] = key,
+                ["label"] = LlmConfig.Label,
+                ["reasoning"] = LlmConfig.Reasoning,
+            };
+        await Rpc("models/connect", connect, false);
+        await Rpc("models/setDefault", new JsonObject { ["provider"] = LlmConfig.Provider, ["modelId"] = LlmConfig.ModelId }, false);
     }
 
     // threads.subscribe as SSE; reconnects from the last seen seq until cancelled.
