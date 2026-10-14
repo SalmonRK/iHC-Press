@@ -8,6 +8,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- display name (Task Manager, file properties); the exe, data folder and mutex keep the BotPress name -->
+    <Product>iHC-Press</Product>
+    <AssemblyTitle>iHC-Press</AssemblyTitle>
     <!-- dist/ ships only the exe + ui/: no pdb, no WebView2 API docs -->
     <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
     <PublishReferencesDocumentationFiles>false</PublishReferencesDocumentationFiles>

@@ -21,7 +21,7 @@ const App = (() => {
     m.ok ? p.resolve(m.result) : p.reject(new Error(m.error || "error"));
   });
   function call(op, args) {
-    if (!webview) return Promise.reject(new Error("ต้องเปิดผ่านแอป BotPress"));
+    if (!webview) return Promise.reject(new Error("ต้องเปิดผ่านแอป iHC-Press"));
     return new Promise((resolve, reject) => {
       const id = ++seq;
       pending.set(id, { resolve, reject });

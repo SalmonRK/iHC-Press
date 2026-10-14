@@ -17,14 +17,14 @@ public static class Program
         // BotTeam and BotPress share one llama-server and one Rakazo (and their start/stop/revive loops): never both at once
         if (Process.GetProcessesByName("BotAdmin").Length > 0)
         {
-            MessageBox.Show("BotTeam กำลังเปิดอยู่ — ปิด BotTeam ก่อนเปิด BotPress (ใช้ LLM และ Rakazo ชุดเดียวกัน)", "BotPress", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show("BotTeam กำลังเปิดอยู่ — ปิด BotTeam ก่อนเปิด iHC-Press (ใช้ LLM และ Rakazo ชุดเดียวกัน)", "iHC-Press", MessageBoxButton.OK, MessageBoxImage.Warning);
             return 1;
         }
         // one window per profile: a second WebView2 on the same data dir would fight over it, and two hosts would double every Rakazo poll
         using var single = new Mutex(true, "BotPress.SingleInstance", out var first);
         if (!first)
         {
-            MessageBox.Show("BotPress เปิดอยู่แล้ว", "BotPress", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show("iHC-Press เปิดอยู่แล้ว", "iHC-Press", MessageBoxButton.OK, MessageBoxImage.Information);
             return 1;
         }
         // --devtools-port N: expose Chrome DevTools Protocol on 127.0.0.1:N for tests/*.mjs only

@@ -700,8 +700,8 @@
     // masthead: hero art (dropped by app.js if the png is missing) over a dateline, the paper's name and the rule
     view.innerHTML = `<div class="page"><header class="hero"><img class="hero-art" src="img/hero.png" alt="" data-optional>
       <div class="hero-row"><div class="grow"><div class="hero-date">${esc(new Date().toLocaleDateString("th-TH", { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}</div>
-      <h1>สำนักข่าวบอท</h1>
-      <div class="muted">นักข่าวบอทหา เขียน ตรวจ และเกลาข่าวเทค/AI · ทุกข่าวรอคุณอนุมัติก่อนเผยแพร่ · สลับสมอง Local / BCAiRouter ได้ที่มุมซ้ายล่าง</div></div>
+      <h1>iHC-Press</h1>
+      <div class="muted">ทีมข่าว AI หา เขียน ตรวจ และเกลาข่าวเทคโนโลยีและคอมพิวเตอร์ · ทุกข่าวรอคุณอนุมัติก่อนเผยแพร่ · สลับสมอง Local / BCAiRouter ได้ที่มุมซ้ายล่าง</div></div>
       <button class="btn primary" id="h-new">${icon("plus")}สร้างบอทใหม่</button></div></header><div id="h-desk"></div>
       ${sectioned(state.bots).map((sec, s) => `<h3 class="sec-title" style="animation-delay:${s * 60}ms">${esc(sec.name)}<span>${sec.bots.length}</span></h3>
       <div class="cards">${sec.bots.map((b, i) => `<div class="card bot-card" data-id="${esc(b.id)}" style="animation-delay:${Math.min(i, 12) * 40}ms">

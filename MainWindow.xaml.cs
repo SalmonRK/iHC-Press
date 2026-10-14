@@ -150,7 +150,7 @@ public partial class MainWindow : Window
         if (IsActive && WindowState != WindowState.Minimized && !force) return new { shown = false };
         if (_tray == null)
         {
-            _tray = new() { Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath!), Text = "BotPress", Visible = true };
+            _tray = new() { Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath!), Text = "iHC-Press", Visible = true };
             _tray.BalloonTipClicked += (_, _) =>
             {
                 if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;

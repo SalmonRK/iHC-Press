@@ -26,7 +26,7 @@
       : `${batch.length} เรื่องรอคุณ: ${[...new Set(batch.map(r => r.botName))].join(", ")}`;
     notified.push({ at: Date.now(), count: batch.length });
     // Windows notification; the host shows it only while the app is in the background or minimized
-    call("notify", { title: "BotPress · มีบอทรอคุณ", body: what + (one && one.promptSnippet ? "\n" + one.promptSnippet.slice(0, 80) : ""),
+    call("notify", { title: "iHC-Press · มีบอทรอคุณ", body: what + (one && one.promptSnippet ? "\n" + one.promptSnippet.slice(0, 80) : ""),
       route: one ? { type: one.groupId ? "group" : "bot", id: one.groupId || one.botId } : { type: "work", tab: "inbox" } }).catch(() => {});
     if (!(one && cur.id === (one.groupId || one.botId)) && cur.type !== "work") toast(what + " · ดูที่ศูนย์งาน", "warn");
   }
