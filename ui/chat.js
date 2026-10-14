@@ -548,7 +548,7 @@
         const r = await rk("computer/screenUrl", { botId: id });
         if (!r.url) return;
         screen.dataset.mode = control ? "control" : "view";
-        screen.innerHTML = `<iframe src="${esc(new URL(r.url, "http://127.0.0.1:5173").href)}" sandbox="allow-scripts allow-pointer-lock" title="computer"></iframe>`;
+        screen.innerHTML = `<iframe src="${esc(new URL(r.url, window.RAKAZO_ORIGIN || "http://127.0.0.1:5173").href)}" sandbox="allow-scripts allow-pointer-lock" title="computer"></iframe>`;
       } else if (s.state !== "booting") {
         delete screen.dataset.mode;
         screen.innerHTML = `<div style="text-align:center"><div class="muted" style="margin-bottom:14px">Computer ${esc(label)}</div>

@@ -23,8 +23,11 @@ public static class Monitor
     public const string LlmBat = Root + @"\serve-th.bat";
     public const string LlmLog = Root + @"\logs\llama-server.log";
     public const string DistroName = "Ubuntu-24.04";
-    public const string RakazoUrl = "http://127.0.0.1:5173";
-    const string RakazoApi = "http://127.0.0.1:3110";
+    // ports can move when another program holds them: the launcher (BotPress.bat) picks free ones and passes them here
+    public static readonly string RakazoUrl = "http://127.0.0.1:" + Port("BOTPRESS_RAKAZO_PORT", 5173);
+    static readonly string RakazoApi = "http://127.0.0.1:" + Port("BOTPRESS_RAKAZO_API_PORT", 3110);
+    static int Port(string env, int fallback) =>
+        int.TryParse(Environment.GetEnvironmentVariable(env), out var p) && p is > 0 and < 65536 ? p : fallback;
     const string RakazoSh = "/mnt/d/botpress/botpress.sh"; // wraps rakazo.sh + the newsdesk container
     static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(3) };
 

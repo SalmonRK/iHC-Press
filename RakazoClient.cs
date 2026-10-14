@@ -13,7 +13,7 @@ namespace BotPress;
 // session cookie never leave this process. The page only gets JSON results.
 static class RakazoClient
 {
-    const string Web = Monitor.RakazoUrl; // web origin also serves /rpc and /api/auth (and /novnc)
+    static readonly string Web = Monitor.RakazoUrl; // web origin also serves /rpc and /api/auth (and /novnc)
     const string Email = "owner@botpress.local";
     static readonly string CredFile = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BotPress", "owner.json");

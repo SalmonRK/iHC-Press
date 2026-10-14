@@ -74,6 +74,8 @@ public partial class MainWindow : Window
         };
         // links the page opens (Rakazo web, llama web UI) go to the default browser, never inside the app
         core.NewWindowRequested += (_, e) => { e.Handled = true; OpenExternal(e.Uri); };
+        // the page needs Rakazo's origin for the bot-computer iframe; its port is not fixed (see Monitor.RakazoUrl)
+        await core.AddScriptToExecuteOnDocumentCreatedAsync($"window.RAKAZO_ORIGIN = {System.Text.Json.JsonSerializer.Serialize(Monitor.RakazoUrl)};");
         core.Navigate("https://botpress.example/index.html");
     }
 
