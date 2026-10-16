@@ -6,11 +6,11 @@
 
 ```
 Windows (เครื่องนี้)
-  iHC-Press.bat ─▶ tools\Start-BotPress.ps1 ─▶ dist\BotPress.exe (WebView2, ชื่อหน้าต่าง iHC-Press)
+  iHC-Press.bat ─▶ tools\Start-BotPress.ps1 ─▶ app\BotPress.exe (WebView2, ชื่อหน้าต่าง iHC-Press)
        │                                           │ rpc :5174 / health :3110 (ย้ายได้ถ้าชน)
        ▼                                           ▼
   WSL Ubuntu-24.04 · ~/rakazo (docker compose: postgres, supervisor, web, worker, api)
-       └─ botpress-newsdesk (MCP :7790 ใน namespace ของ rakazo-worker-1, /news = D:\botpress\news)
+       └─ botpress-newsdesk (MCP :7790 ใน namespace ของ rakazo-worker-1, /news = D:\AI-ART\BotPress\data\news)
        │
        ▼ local provider (ตาม llm.json → ~/rakazo/.env)
   LocalAI-07  100.125.52.66:11434  Ollama · qwen3.6:35b-a3b · ctx 64K   ← ใช้อยู่
@@ -21,21 +21,24 @@ Windows (เครื่องนี้)
 |---|---|
 | เปิดโปรแกรม | `D:\AI-ART\BotPress\iHC-Press.bat` (`dev` = devtools 9224) · `BotPress.bat` ใช้แทนกันได้ |
 | launcher | `D:\AI-ART\BotPress\tools\Start-BotPress.ps1` (`-Dev`, `-NoPopup`, `-WaitPid <pid>`) |
-| โค้ดแอป (git) | `D:\AI-ART\BotPress\app` = junction `D:\botpress` · branch `ihc-rename` |
-| infra | `D:\AI-ART\BotPress\localai` = junction `D:\localai` · `botadmin\rakazo.sh`, `llm-profiles\`, `backups\`, `logs\` |
+| โค้ด (git) | `D:\SalmonRK\BotPress\iHC-Press` · branch `ihc-rename` · ไม่มีข้อมูลข่าวหรือ build ที่ใช้งานจริงอยู่ในนี้ |
+| ตัวแอปที่ติดตั้ง | `D:\AI-ART\BotPress\app` = ผล `dotnet publish` (exe, `ui\`, `newsdesk\`, `botpress.sh`, `tools\yt-digest.mjs`) |
+| ที่อยู่ทั้งหมด | `%LOCALAPPDATA%\BotPress\paths.json` (`app`, `news`, `infra`, `launcher`) · launcher สร้างให้ถ้ายังไม่มี · ไม่มีไฟล์ = โครงเดิม `D:\botpress\news`, `D:\localai` |
+| infra | `D:\AI-ART\BotPress\localai` · `botadmin\rakazo.sh`, `llm-profiles\`, `backups\`, `logs\` |
 | ค่า LLM ที่ใช้อยู่ | `%LOCALAPPDATA%\BotPress\llm.json` (สำรองอัตโนมัติ `llm.json.bak` ตอนสลับในแอป) |
 | ความลับ (**ห้าม commit / ห้ามแปะในแชท**) | `%LOCALAPPDATA%\BotPress\owner.json`, `news\.token`, `~/rakazo/.env`, `*-api-key.txt`, `backups\secrets-*` |
-| ข้อมูลข่าว | `D:\botpress\news\` (`stories.json`, `sources.json`, `<วันที่>\*.md`, `youtube\`) |
-| log | `D:\localai\logs\launcher.log`, `newsroom-live-*.log` |
+| ข้อมูลข่าว | `D:\AI-ART\BotPress\data\news\` (`stories.json`, `sources.json`, `<วันที่>\*.md`, `youtube\`) |
+| log | `D:\AI-ART\BotPress\localai\logs\launcher.log`, `newsroom-live-*.log` |
 
-คำสั่งควบคุมใน WSL (ใช้จาก PowerShell ได้):
+คำสั่งควบคุมใน WSL ใช้จาก PowerShell โดยประกาศ `bp` ครั้งเดียวต่อหน้าต่าง (บอกที่อยู่ข้อมูลข่าวและ infra ให้ `botpress.sh`):
 
 ```powershell
-wsl -d Ubuntu-24.04 -- bash /mnt/d/botpress/botpress.sh status     # Rakazo + NEWSDESK running
-wsl -d Ubuntu-24.04 -- bash /mnt/d/botpress/botpress.sh start|revive|stop
-wsl -d Ubuntu-24.04 -- bash /mnt/d/botpress/botpress.sh logs worker # 200 บรรทัดล่าสุด (api, web, worker, supervisor, postgres)
-wsl -d Ubuntu-24.04 -- bash /mnt/d/botpress/botpress.sh backup     # pg_dump + appdata + .env → D:\localai\backups\rakazo-<เวลา>
-wsl -d Ubuntu-24.04 -- bash /mnt/d/botpress/botpress.sh newsdesk   # สร้าง container โต๊ะข่าวใหม่ถ้าหลุด
+function bp { wsl -d Ubuntu-24.04 -- env BP_NEWS=/mnt/d/AI-ART/BotPress/data/news BP_INFRA=/mnt/d/AI-ART/BotPress/localai bash /mnt/d/AI-ART/BotPress/app/botpress.sh @args }
+bp status     # Rakazo + NEWSDESK running
+bp start|revive|stop
+bp logs worker # 200 บรรทัดล่าสุด (api, web, worker, supervisor, postgres)
+bp backup     # pg_dump + appdata + .env → D:\AI-ART\BotPress\localai\backups\rakazo-<เวลา>
+bp newsdesk   # สร้าง container โต๊ะข่าวใหม่ถ้าหลุด
 ```
 
 ## 1. งานประจำวัน
@@ -48,7 +51,7 @@ wsl -d Ubuntu-24.04 -- bash /mnt/d/botpress/botpress.sh newsdesk   # สร้�
 4. ในแอปเปิด **Monitor**: การ์ด LLM = "พร้อม" และ Rakazo = "พร้อม"
 5. เปิดแอปทิ้งไว้ทั้งวัน (คิว YouTube ของบอทและ routine ต้องใช้)
 
-⚠ อย่าเปิด `dist\BotPress.exe` ตรง ๆ เพราะ port อาจไม่ตรงกับ Rakazo และ `.env` จะไม่ถูกอัปเดต
+⚠ อย่าเปิด `app\BotPress.exe` ตรง ๆ เพราะ port อาจไม่ตรงกับ Rakazo และ `.env` จะไม่ถูกอัปเดต
 
 ### 1.2 ระหว่างวัน
 
@@ -74,10 +77,10 @@ curl.exe -s http://100.125.52.66:11434/api/ps          # โมเดลที�
 curl.exe -s -m 4 http://100.97.194.95:8001/health      # busy:false, requests_running:0
 tailscale status | findstr localaipc                   # ดูว่าเครื่อง online ไหม
 # Rakazo + โต๊ะข่าว
-wsl -d Ubuntu-24.04 -- bash /mnt/d/botpress/botpress.sh status
+bp status
 # selftest
-D:\botpress\dist\BotPress.exe --selftest               # ต้องได้ PASS (ต้องมี NVIDIA GPU)
-cd D:\botpress\newsdesk; node server.mjs --selftest    # 54/54
+D:\AI-ART\BotPress\app\BotPress.exe --selftest               # ต้องได้ PASS (ต้องมี NVIDIA GPU)
+cd D:\AI-ART\BotPress\data\newsdesk; node server.mjs --selftest    # 54/54
 ```
 
 ในแอป: เมนู **ตั้งค่า → สมอง AI** แสดงสถานะทุกโปรไฟล์ในหน้าเดียว · **ตั้งค่า → YouTube** แสดงเครื่องมือที่ติดตั้งแล้ว
@@ -107,11 +110,11 @@ cd D:\botpress\newsdesk; node server.mjs --selftest    # 54/54
 ### 3.4 บอทไม่เห็นเครื่องมือโต๊ะข่าว / ได้ 401 / ไม่มี `list_sources`
 
 ```powershell
-wsl -d Ubuntu-24.04 -- bash /mnt/d/botpress/botpress.sh newsdesk    # สร้าง container ใหม่
+bp newsdesk    # สร้าง container ใหม่
 wsl -d Ubuntu-24.04 -- docker logs --tail 50 botpress-newsdesk
 ```
 
-ถ้ายังไม่หาย: เปิดแอปด้วย `iHC-Press.bat dev` แล้ว `cd D:\botpress; node seed-bots.mjs` (idempotent ไม่สร้างซ้ำ)
+ถ้ายังไม่หาย: เปิดแอปด้วย `iHC-Press.bat dev` แล้ว `cd D:\SalmonRK\BotPress\iHC-Press; node seed-bots.mjs` (idempotent ไม่สร้างซ้ำ)
 
 ### 3.5 เรื่องข่าวค้าง
 
@@ -127,7 +130,7 @@ wsl -d Ubuntu-24.04 -- docker logs --tail 50 botpress-newsdesk
 
 | อาการ | ทำอย่างไร |
 |---|---|
-| บอทได้ "pending" ตลอด | แอปต้องเปิดอยู่ (หยิบคิวทุก 15 วินาที) · ดูไฟล์ค้างใน `D:\botpress\news\youtube\requests\` |
+| บอทได้ "pending" ตลอด | แอปต้องเปิดอยู่ (หยิบคิวทุก 15 วินาที) · ดูไฟล์ค้างใน `D:\AI-ART\BotPress\data\news\youtube\requests\` |
 | ได้ข้อความ error | ดู `news\youtube\<videoId>\error.json` · บอทเรียกใหม่ได้ (error ถูกล้างหลังรายงานครั้งเดียว) |
 | "ไม่มีคำบรรยาย" | คลิปไม่มี subtitle/auto-caption สรุปไม่ได้ |
 | yt-dlp ล้ม (YouTube เปลี่ยนระบบ) | `yt-dlp -U` แล้วลองใหม่ |
@@ -136,11 +139,11 @@ wsl -d Ubuntu-24.04 -- docker logs --tail 50 botpress-newsdesk
 
 ### 3.7 ล็อกอิน Rakazo ไม่ได้ / แอปขึ้นหน้าสร้างบัญชีใหม่
 
-`owner.json` หาย → กู้จาก `D:\localai\backups\secrets-*\` ไปที่ `%LOCALAPPDATA%\BotPress\` แล้วเปิดใหม่ **อย่ากดสร้างบัญชีใหม่**
+`owner.json` หาย → กู้จาก `D:\AI-ART\BotPress\localai\backups\secrets-*\` ไปที่ `%LOCALAPPDATA%\BotPress\` แล้วเปิดใหม่ **อย่ากดสร้างบัญชีใหม่**
 
 ### 3.8 สลับโปรไฟล์แล้วแอปไม่เปิดกลับมา
 
-1. ดู `D:\localai\logs\launcher.log` บรรทัดท้าย
+1. ดู `D:\AI-ART\BotPress\localai\logs\launcher.log` บรรทัดท้าย
 2. เปิดเองด้วย `iHC-Press.bat`
 3. ถ้าโปรไฟล์ใหม่เสีย: คัดลอก `%LOCALAPPDATA%\BotPress\llm.json.bak` กลับเป็น `llm.json` แล้วเปิดใหม่
 
@@ -148,18 +151,18 @@ wsl -d Ubuntu-24.04 -- docker logs --tail 50 botpress-newsdesk
 
 | สำรองอะไร | อย่างไร | ความถี่ที่แนะนำ |
 |---|---|---|
-| ฐานข้อมูล Rakazo + appdata + .env | `botpress.sh backup` → `D:\localai\backups\rakazo-<เวลา>\` | ทุกสัปดาห์ และก่อนอัปเกรด/seed ใหม่ |
-| ข่าวและแหล่งข่าว | คัดลอก `D:\botpress\news\` | ทุกสัปดาห์ |
-| `owner.json`, `llm.json` | คัดลอกไป `D:\localai\backups\secrets-<วันที่>\` | เมื่อเปลี่ยน |
-| โปรไฟล์ LLM | `D:\localai\llm-profiles\` | เมื่อเปลี่ยน |
+| ฐานข้อมูล Rakazo + appdata + .env | `botpress.sh backup` → `D:\AI-ART\BotPress\localai\backups\rakazo-<เวลา>\` | ทุกสัปดาห์ และก่อนอัปเกรด/seed ใหม่ |
+| ข่าวและแหล่งข่าว | คัดลอก `D:\AI-ART\BotPress\data\news\` | ทุกสัปดาห์ |
+| `owner.json`, `llm.json` | คัดลอกไป `D:\AI-ART\BotPress\localai\backups\secrets-<วันที่>\` | เมื่อเปลี่ยน |
+| โปรไฟล์ LLM | `D:\AI-ART\BotPress\localai\llm-profiles\` | เมื่อเปลี่ยน |
 
 กู้ฐานข้อมูล (หยุด worker ก่อน):
 
 ```bash
 # ใน WSL
 cd ~/rakazo && docker compose -f docker-compose.images.yml stop worker api web supervisor
-docker exec -i rakazo-postgres-1 pg_restore -U rakazo -d rakazo --clean --if-exists < /mnt/d/localai/backups/rakazo-<เวลา>/rakazo.pgdump
-bash /mnt/d/botpress/botpress.sh start
+docker exec -i rakazo-postgres-1 pg_restore -U rakazo -d rakazo --clean --if-exists < /mnt/d/AI-ART/BotPress/localai/backups/rakazo-<เวลา>/rakazo.pgdump
+env BP_NEWS=/mnt/d/AI-ART/BotPress/data/news BP_INFRA=/mnt/d/AI-ART/BotPress/localai bash /mnt/d/AI-ART/BotPress/app/botpress.sh start
 ```
 
 ⚠ ยังไม่เคยทดสอบการกู้จริง ทำหลัง backup ล่าสุดเสมอ
@@ -167,26 +170,26 @@ bash /mnt/d/botpress/botpress.sh start
 ## 5. Build และ deploy โค้ดใหม่
 
 ```powershell
-cd D:\botpress
+cd D:\SalmonRK\BotPress\iHC-Press
 # 1) ปิดแอปก่อน (exe ถูกล็อกตอนเปิด)
-dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o dist
-dist\BotPress.exe --selftest                       # PASS
+dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o D:\AI-ART\BotPress\app
+D:\AI-ART\BotPress\app\BotPress.exe --selftest   # PASS
 cd newsdesk; node server.mjs --selftest; cd ..     # 54/54
-# 2) ถ้าแก้ newsdesk/server.mjs ต้องสร้าง container ใหม่
+# 2) ถ้าแก้ newsdesk/server.mjs ต้องสร้าง container ใหม่ (container อ่านโค้ดจาก app\newsdesk ที่ publish แล้ว)
 wsl -d Ubuntu-24.04 -- docker restart botpress-newsdesk
 # 3) เปิดแบบ dev แล้วทดสอบ e2e (เรียก LLM จริง ~1 นาที)
 D:\AI-ART\BotPress\iHC-Press.bat dev
 node tests\e2e.mjs D:\tmp                          # 18/18
 ```
 
-- แอปอ่านหน้าจอจาก `dist\ui\` (publish คัดลอกให้) แก้แค่ `ui\` จึงต้อง publish ใหม่ หรือระหว่างพัฒนาให้ตั้ง `BOTPRESS_UI_DIR=D:\botpress\ui` ก่อนเปิดแอป แล้วปิดเปิดแอปเพื่อดูผล
+- แอปอ่านหน้าจอจาก `D:\AI-ART\BotPress\app\ui\` (publish คัดลอกให้) แก้แค่ `ui\` จึงต้อง publish ใหม่ หรือระหว่างพัฒนาให้ตั้ง `BOTPRESS_UI_DIR=D:\SalmonRK\BotPress\iHC-Press\ui` ก่อนเปิดแอป แล้วปิดเปิดแอปเพื่อดูผล
 - dotnet ใน PATH (`C:\Program Files\dotnet`, SDK 10.0.401) ใช้ได้ ไม่ต้องใช้ path ใน `%LOCALAPPDATA%` ตามที่ README ต้นฉบับเขียน
 
 ## 6. Git และการอัปเดตจากต้นทาง
 
 | งาน | คำสั่ง |
 |---|---|
-| ดูสถานะ | `git -C D:\botpress log --oneline -8` · branch: main → remote-llm → ihc-brand → **ihc-rename** |
+| ดูสถานะ | `git -C D:\SalmonRK\BotPress\iHC-Press log --oneline -8` · branch: main → remote-llm → ihc-brand → **ihc-rename** |
 | remote | `origin` = github.com/SalmonRK/iHC-Press · `upstream` = jaturapornchai/botpress (push ปิดไว้) |
 | เช็กอัปเดต Rakazo + ต้นฉบับ | `node D:\SalmonRK\BotPress\tools\check-rakazo-updates.mjs` |
 | ดึงต้นฉบับ | `git fetch upstream` แล้ว merge เข้า branch ของเรา (อ่าน diff ของ `seed-bots.mjs` และ `newsdesk/` ก่อน) |
@@ -198,7 +201,7 @@ node tests\e2e.mjs D:\tmp                          # 18/18
 
 | ทดสอบ | คำสั่ง | ใช้ LLM | เวลา |
 |---|---|---|---|
-| host selftest | `dist\BotPress.exe --selftest` | ไม่ | วินาที |
+| host selftest | `D:\AI-ART\BotPress\app\BotPress.exe --selftest` | ไม่ | วินาที |
 | newsdesk selftest | `node newsdesk\server.mjs --selftest` | ไม่ | วินาที |
 | seed dry run | `node seed-bots.mjs --dry` | ไม่ | วินาที |
 | e2e (แอปต้องเปิดด้วย `dev`) | `node tests\e2e.mjs <outDir>` | ใช่ (สั้น) | ~1 นาที |

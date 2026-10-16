@@ -9,8 +9,8 @@ namespace BotPress;
 // container) keeps up to date, and opens the news folder. Read-only here; bots change stories only through the MCP tools.
 public static class Newsdesk
 {
-    public const string NewsDir = @"D:\botpress\news";
-    const string StoriesFile = NewsDir + @"\stories.json";
+    public static readonly string NewsDir = Paths.News; // paths.json "news" (originally D:\botpress\news)
+    static readonly string StoriesFile = Path.Combine(NewsDir, "stories.json");
 
     public static JsonNode List()
     {

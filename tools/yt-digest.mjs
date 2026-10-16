@@ -2,7 +2,7 @@
 // YouTube -> news digest for iHC-Press: metadata + timestamped transcript (yt-dlp), a Thai summary with key moments
 // (NotebookLM when its CLI is installed and logged in, otherwise the bots' own LLM from llm.json), and one screen capture
 // per key moment (ffmpeg seeks the stream directly: no full download). Writes <out>/<videoId>/digest.json + digest.md + frames/.
-// usage: node tools/yt-digest.mjs <youtube-url> [--out D:\botpress\news\youtube] [--engine auto|llm|notebooklm] [--frames 6]
+// usage: node tools/yt-digest.mjs <youtube-url> [--out <news>\youtube] [--engine auto|llm|notebooklm] [--frames 6]
 // progress goes to stderr as "STEP <text>"; the last stdout line is the result JSON ({ok, id, dir, engine, ...} or {ok:false, error}).
 // Needs on PATH: yt-dlp, ffmpeg, node (and optionally notebooklm from notebooklm-py). Video frames are the creator's
 // work: stories must credit the channel and link the video.
@@ -11,12 +11,13 @@ import { promisify } from "node:util";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
+import { NEWS_DIR } from "./paths.mjs";
 
 const run = promisify(execFile);
 const argv = process.argv.slice(2);
 const opt = (k, d) => { const i = argv.indexOf("--" + k); return i >= 0 && argv[i + 1] ? argv[i + 1] : d; };
 const url = argv[0] && !argv[0].startsWith("--") ? argv[0] : undefined;
-const OUT = opt("out", "D:\\botpress\\news\\youtube");
+const OUT = opt("out", path.join(NEWS_DIR, "youtube"));
 const ENGINE = opt("engine", "auto");
 const FRAMES = Math.min(10, Math.max(0, Number(opt("frames", 6)) || 0));
 const LLM_JSON = opt("llm", path.join(process.env.LOCALAPPDATA || os.homedir(), "BotPress", "llm.json"));

@@ -18,17 +18,18 @@ public record Snapshot(Gpu? Gpu, double CpuPct, double RamUsedGb, double RamTota
 
 public static class Monitor
 {
-    public const string Root = @"D:\localai";
+    public static readonly string Root = Paths.Infra; // paths.json "infra" (originally D:\localai)
     public static readonly string LlmUrl = LlmConfig.HealthUrl; // llm.json can point it at another machine
-    public const string LlmBat = Root + @"\serve-th.bat";
-    public const string LlmLog = Root + @"\logs\llama-server.log";
+    public static readonly string LlmBat = Root + @"\serve-th.bat";
+    public static readonly string LlmLog = Root + @"\logs\llama-server.log";
     public const string DistroName = "Ubuntu-24.04";
     // ports can move when another program holds them: the launcher (BotPress.bat) picks free ones and passes them here
     public static readonly string RakazoUrl = "http://127.0.0.1:" + Port("BOTPRESS_RAKAZO_PORT", 5173);
     static readonly string RakazoApi = "http://127.0.0.1:" + Port("BOTPRESS_RAKAZO_API_PORT", 3110);
     static int Port(string env, int fallback) =>
         int.TryParse(Environment.GetEnvironmentVariable(env), out var p) && p is > 0 and < 65536 ? p : fallback;
-    const string RakazoSh = "/mnt/d/botpress/botpress.sh"; // wraps rakazo.sh + the newsdesk container
+    // wraps rakazo.sh + the newsdesk container; ships next to the exe and is told where the news data and infra live
+    static readonly string RakazoSh = $"env BP_NEWS={Paths.Wsl(Paths.News)} BP_INFRA={Paths.Wsl(Paths.Infra)} bash {Paths.Wsl(Path.Combine(Paths.App, "botpress.sh"))}";
     static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(3) };
 
     // admin key = the "gemma-" line; never shown in UI or logs
@@ -81,7 +82,7 @@ public static class Monitor
     }
 
     // Ollama's runner (Memory Hub's bge-m3) is also named llama-server.exe: only count/kill the exe serve-th.bat runs (keep in sync with its cd)
-    const string LlmExe = Root + @"\llamacpp\bin\llama-server.exe";
+    static readonly string LlmExe = Root + @"\llamacpp\bin\llama-server.exe";
     static Process[] LlmProcs() => Process.GetProcessesByName("llama-server").Where(p =>
     {
         try { return string.Equals(p.MainModule?.FileName, LlmExe, StringComparison.OrdinalIgnoreCase); }
@@ -153,7 +154,7 @@ public static class Monitor
         return new(gpu, Cpu(), Math.Round((mem.Total - mem.Avail) / GB, 1), Math.Round(mem.Total / GB, 1), await ReadLlm() with { Source = LlmConfig.Remote ? LlmConfig.Label : "llama-server :8080" }, wsl, await ReadRakazo(wsl));
     }
 
-    static string Sh(string args) => Run("wsl.exe", $"-d {DistroName} --exec bash {RakazoSh} {args}", Encoding.UTF8);
+    static string Sh(string args) => Run("wsl.exe", $"-d {DistroName} --exec {RakazoSh} {args}", Encoding.UTF8);
 
     // lines from rakazo.sh status: "KEEPALIVE 0|1", "C <json>" compose, "B <json>" bot computer, "S <json>" docker stats
     public static (bool KeepAlive, List<Box> Boxes) ParseRakazo(string text)

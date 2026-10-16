@@ -5,7 +5,9 @@
 // usage: node tools/botteam-pause.mjs pause | resume
 import fs from "node:fs";
 import { spawnSync } from "node:child_process";
-import { connect } from "file:///D:/localai/botadmin/tests/cdp.mjs";
+import { pathToFileURL } from "node:url";
+import { INFRA_DIR } from "./paths.mjs";
+const { connect } = await import(pathToFileURL(INFRA_DIR + "/botadmin/tests/cdp.mjs").href);
 
 const STATE = new URL("../botteam-paused.json", import.meta.url);
 const cmd = process.argv[2];

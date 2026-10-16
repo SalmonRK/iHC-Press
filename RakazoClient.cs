@@ -50,9 +50,9 @@ static class RakazoClient
     // request. Rakazo's hotfix sends it X-BCAiRouter-Guard: 0 (its default guard tells the model to ignore user/tool text).
     // The page only picks a mode; keys stay here.
     const string SyntheticUrl = "https://api.synthetic.new/openai/v1", SyntheticModel = "hf:zai-org/GLM-5.3-Flash";
-    const string SyntheticKeyFile = Monitor.Root + @"\synthetic-api-key.txt";
+    static readonly string SyntheticKeyFile = Monitor.Root + @"\synthetic-api-key.txt";
     const string BcaiUrl = "http://172.17.0.1:18399/v1", BcaiModel = "bcai/tools";
-    const string BcaiKeyFile = Monitor.Root + @"\bcai-api-key.txt";
+    static readonly string BcaiKeyFile = Monitor.Root + @"\bcai-api-key.txt";
 
     static string? FirstLine(string file) =>
         File.Exists(file) ? File.ReadLines(file).Select(l => l.Trim()).FirstOrDefault(l => l.Length > 0) : null;

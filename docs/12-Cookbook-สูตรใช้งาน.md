@@ -69,7 +69,7 @@
 4. บันทึก มีผลทันทีกับการเรียก `list_sources` ครั้งถัดไป
 5. ปิดชั่วคราว: กดสวิตช์ที่แถวนั้น (ไม่ต้องลบ)
 
-> ไฟล์จริงคือ `D:\botpress\news\sources.json` · ชุดเริ่มต้นอยู่ที่ `newsdesk\sources-default.json`
+> ไฟล์จริงคือ `D:\AI-ART\BotPress\data\news\sources.json` · ชุดเริ่มต้นอยู่ที่ `newsdesk\sources-default.json`
 
 ## 4. สรุปคลิป YouTube + ภาพหน้าจอเพื่อทำข่าว
 
@@ -81,7 +81,7 @@
    - ตรวจข้ออ้างในหัวข้อ "ต้องตรวจ" กับแหล่งต้นทาง (ผู้ผลิต/เบนช์มาร์กตัวจริง)
    - **ใส่เครดิตช่องและลิงก์คลิปทุกครั้ง** ภาพหน้าจอเป็นของเจ้าของช่อง
 
-ผลเก็บที่ `D:\botpress\news\youtube\<videoId>\` (`digest.json`, `digest.md`, `transcript.txt`, `frames\`) · กดสรุปคลิปเดิมในแอป = สรุปใหม่ทับผลเดิม (ส่วนบอทที่ขอคลิปที่มีผลแล้วจะได้ผลเดิมทันที)
+ผลเก็บที่ `D:\AI-ART\BotPress\data\news\youtube\<videoId>\` (`digest.json`, `digest.md`, `transcript.txt`, `frames\`) · กดสรุปคลิปเดิมในแอป = สรุปใหม่ทับผลเดิม (ส่วนบอทที่ขอคลิปที่มีผลแล้วจะได้ผลเดิมทันที)
 
 ## 5. สั่งให้บอทสรุปคลิปเองแล้วเขียนข่าว
 
@@ -119,7 +119,7 @@
 
 ตอนนี้คำสั่ง "เรียก `list_sources` ก่อนหาข่าว" อยู่ในคำอธิบายของโต๊ะข่าวเท่านั้น ถ้าอยากให้บอททำทุกครั้ง:
 
-1. แก้ `D:\botpress\seed-bots.mjs` ฟังก์ชัน `reporter` (บรรทัด ~19) ข้อ 1 "หาข่าว" เพิ่มก่อนประโยคแรก:
+1. แก้ `D:\SalmonRK\BotPress\iHC-Press\seed-bots.mjs` ฟังก์ชัน `reporter` (บรรทัด ~19) ข้อ 1 "หาข่าว" เพิ่มก่อนประโยคแรก:
    `เริ่มด้วย list_sources beat="<สายของคุณ>" แล้วไล่ดูแหล่งในรายการก่อน จากนั้นค่อยค้นเว็บเพิ่ม · ทำตามหมายเหตุของแต่ละแหล่ง ·`
 2. ถ้าอยากให้ใช้คลิปได้ด้วย เพิ่ม: `แหล่งชนิด youtube ให้ใช้ youtube_digest กับคลิปใหม่ แล้วใส่ชื่อช่องและลิงก์คลิปใน sources`
 3. backup ก่อน (`botpress.sh backup`) แล้วเปิดแอปด้วย `iHC-Press.bat dev`
@@ -149,7 +149,7 @@
 ## 11. สรุปคลิปจาก command line
 
 ```powershell
-cd D:\botpress
+cd D:\SalmonRK\BotPress\iHC-Press
 node tools\yt-digest.mjs "https://www.youtube.com/watch?v=d2hGLaQQpUk"                 # ค่าเริ่มต้น: engine auto, 6 ภาพ
 node tools\yt-digest.mjs "<url>" --engine llm --frames 8 --out D:\tmp\yt                 # บังคับใช้ LLM, 8 ภาพ, โฟลเดอร์อื่น
 node tools\yt-digest.mjs "<url>" --engine notebooklm                                     # บังคับ NotebookLM (ต้องล็อกอินก่อน)
@@ -169,5 +169,5 @@ node tools\yt-digest.mjs "<url>" --engine notebooklm                            
 
 1. prompt ทั้งหมดอยู่ที่ [prompt/README.md](prompt/README.md) และ `prompt/avatars.json`
 2. สร้างด้วย Google Flow: `node D:\SalmonRK\BotPress\tools\gen-avatars.mjs <outDir> [id]` (ต้องเปิด Chrome Canary ที่ล็อกอิน Flow ไว้)
-3. วางภาพต้นฉบับใน `D:\botpress\assets\src\` → `python tools\make-assets.py` → ได้ `ui\img`, `ui\avatars`, `assets\app.ico`
+3. วางภาพต้นฉบับใน `D:\SalmonRK\BotPress\iHC-Press\assets\src\` → `python tools\make-assets.py` → ได้ `ui\img`, `ui\avatars`, `assets\app.ico`
 4. publish ใหม่ (Runbook §5) · แนวทางแบรนด์ดู [07](07-แบรนด์-iHC-Press.md)

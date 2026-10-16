@@ -9,12 +9,12 @@ using System.Text.RegularExpressions;
 namespace BotPress;
 
 // ตั้งค่า page (ui/settings.js): LLM profiles, the owner's news-source list and the YouTube -> digest pipeline.
-// Profiles are llm.json files in D:\localai\llm-profiles; "use" copies one over %LOCALAPPDATA%\BotPress\llm.json and restarts the
+// Profiles are llm.json files in <infra>\llm-profiles (Paths.Infra); "use" copies one over %LOCALAPPDATA%\BotPress\llm.json and restarts the
 // app through the launcher, which rewrites RAKAZO_LOCAL_* in ~/rakazo/.env (LlmConfig is read once at startup, so a restart is needed).
 public static class Settings
 {
     public static readonly string ProfilesDir = Path.Combine(Monitor.Root, "llm-profiles");
-    const string Launcher = @"D:\AI-ART\BotPress\tools\Start-BotPress.ps1";
+    static readonly string Launcher = Paths.Launcher;
     static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(4) };
     static readonly Regex IdRx = new("^[a-z0-9][a-z0-9-]{0,59}$");
 
@@ -142,7 +142,7 @@ public static class Settings
 
     // ---------- news sources ----------
     static readonly string SourcesFile = Path.Combine(Newsdesk.NewsDir, "sources.json");
-    static readonly string SourcesDefault = @"D:\botpress\newsdesk\sources-default.json";
+    static readonly string SourcesDefault = Path.Combine(Paths.App, "newsdesk", "sources-default.json");
     static readonly string[] Types = ["web", "rss", "youtube", "social", "other"];
     static readonly string[] Beats = ["ai", "gadget", "software", "startup", "security", "gaming", "cloud", "policy", "other"]; // newsdesk/server.mjs BEATS
 
@@ -229,7 +229,7 @@ public static class Settings
 
     // ---------- YouTube digests ----------
     static readonly string YtDir = Path.Combine(Newsdesk.NewsDir, "youtube");
-    static readonly string YtScript = @"D:\botpress\tools\yt-digest.mjs";
+    static readonly string YtScript = Path.Combine(Paths.App, "tools", "yt-digest.mjs");
     static readonly SemaphoreSlim YtGate = new(1, 1); // one clip at a time: the LLM and the download share the same machine
     static string? _ytBusy;
 

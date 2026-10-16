@@ -28,7 +28,7 @@
 
 ## 3. แท็บ "แหล่งข่าว"
 
-- **ที่เก็บ:** `D:\botpress\news\sources.json` แต่ละรายการมี ชื่อ, URL, ชนิด (เว็บ/RSS/YouTube/โซเชียล), สายข่าว (ไม่เลือก = ทุกสาย), หมายเหตุสำหรับบอท และสถานะเปิด/ปิด
+- **ที่เก็บ:** `D:\AI-ART\BotPress\data\news\sources.json` แต่ละรายการมี ชื่อ, URL, ชนิด (เว็บ/RSS/YouTube/โซเชียล), สายข่าว (ไม่เลือก = ทุกสาย), หมายเหตุสำหรับบอท และสถานะเปิด/ปิด
 - **ชุดเริ่มต้น** (`newsdesk/sources-default.json`):
   - newsroom ทางการ ได้แก่ AMD, Intel, NVIDIA, Qualcomm, Apple, Samsung TH, OpenAI, Anthropic, Google, Microsoft, GitHub และ AWS
   - สื่อฮาร์ดแวร์ ได้แก่ Tom's Hardware, TechPowerUp และ VideoCardz (มีหมายเหตุว่าต้องยืนยัน)
@@ -50,7 +50,7 @@
    - ถ้า NotebookLM ล้มเหลว จะสลับไปใช้ LLM เอง
 3. ดาวน์โหลดเฉพาะภาพวิดีโอ (≤720p) แล้วให้ `ffmpeg` จับภาพหน้าจอ ณ แต่ละประเด็น จากนั้นลบวิดีโอทิ้ง
    - ffmpeg อ่านจาก URL ของ YouTube ตรง ๆ จะค้าง เพราะ YouTube จำกัดความเร็ว จึงต้องดาวน์โหลดผ่าน yt-dlp ก่อน
-4. บันทึกผลที่ `D:\botpress\news\youtube\<videoId>\`: `digest.json`, `digest.md`, `transcript.txt` และ `frames/*.jpg`
+4. บันทึกผลที่ `D:\AI-ART\BotPress\data\news\youtube\<videoId>\`: `digest.json`, `digest.md`, `transcript.txt` และ `frames/*.jpg`
 
 **ผลทดสอบ:**
 

@@ -5,9 +5,10 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { connect } from "./tests/cdp.mjs";
+import { NEWS_DIR } from "./tools/paths.mjs";
 
 const DRY = process.argv.includes("--dry");
-const TOKEN_FILE = "D:/botpress/news/.token"; // written by the newsdesk container on its first start; never printed
+const TOKEN_FILE = NEWS_DIR + "\\.token"; // written by the newsdesk container on its first start; never printed
 const MAX_INSTRUCTIONS = 20000, MAX_NAME = 80, MAX_TITLE = 500; // Rakazo v0.1.6 contracts (domain.ts BOT_*_MAX_LENGTH)
 
 const BEATS = { ai: "AI-โมเดล", gadget: "Gadget-มือถือ", software: "ซอฟต์แวร์-แอป", startup: "สตาร์ทอัพ-ธุรกิจเทค",

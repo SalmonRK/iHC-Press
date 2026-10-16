@@ -22,11 +22,12 @@
 | อะไร | ที่ไหน |
 |---|---|
 | เปิดโปรแกรม | `D:\AI-ART\BotPress\iHC-Press.bat` (`dev` = เปิด devtools) · `BotPress.bat` ใช้แทนกันได้ |
-| โค้ดแอป (git branch `ihc-rename`) | `D:\AI-ART\BotPress\app` (junction `D:\botpress`) |
-| infra และ log | `D:\AI-ART\BotPress\localai` (junction `D:\localai`) · `logs\launcher.log`, `logs\newsroom-live-*.log` |
+| **โค้ด (git branch `ihc-rename`)** | `D:\SalmonRK\BotPress\iHC-Press` · แก้โค้ดที่นี่แล้ว publish ไปที่ติดตั้ง |
+| **ที่ติดตั้ง (โตได้ไม่กระทบโค้ด)** | `D:\AI-ART\BotPress\app` (exe + ui + newsdesk ที่ publish) · `data\news` (ข้อมูลข่าว) · `localai` (infra) · ตั้งค่าที่อยู่ใน `%LOCALAPPDATA%\BotPress\paths.json` |
+| infra และ log | `D:\AI-ART\BotPress\localai` · `logs\launcher.log`, `logs\newsroom-live-*.log` |
 | Rakazo | WSL `Ubuntu-24.04` → `~/rakazo` (`.env`, compose) |
 | ตั้งค่า LLM | ในแอป: **ตั้งค่า → สมอง AI** · ไฟล์ `%LOCALAPPDATA%\BotPress\llm.json` → ตอนนี้ qwen3.6:35b-a3b บน Ollama `http://100.125.52.66:11434` · โปรไฟล์ที่ `D:\AI-ART\BotPress\localai\llm-profiles\` |
-| ข่าวที่เผยแพร่ | `D:\AI-ART\BotPress\app\news\<วันที่>\` |
-| แหล่งข่าว / สรุปคลิป | `D:\botpress\news\sources.json` · `D:\botpress\news\youtube\<videoId>\` |
+| ข่าวที่เผยแพร่ | `D:\AI-ART\BotPress\data\news\<วันที่>\` |
+| แหล่งข่าว / สรุปคลิป | `D:\AI-ART\BotPress\data\news\sources.json` · `D:\AI-ART\BotPress\data\news\youtube\<videoId>\` |
 | **Repo ของเรา (fork)** | https://github.com/SalmonRK/iHC-Press (public) · ในเครื่อง `origin` = fork, `upstream` = ต้นฉบับ (ดึงอย่างเดียว ปิดการ push) |
 | ต้นฉบับ | https://github.com/jaturapornchai/botpress (ไม่มีไฟล์ LICENSE แต่ผู้เขียนประกาศเป็น open source "เอาไปต่อยอดได้เลย" ในเพจ ติด Ai ไปกับลุงจืด เมื่อ 4 ต.ค. 2026 ดู 05) · Rakazo https://github.com/elie222/rakazo (Apache-2.0) |

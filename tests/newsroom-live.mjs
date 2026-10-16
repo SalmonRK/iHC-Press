@@ -4,8 +4,9 @@
 // usage: BotPress.exe --devtools-port 9224 running + seeded; node tests/newsroom-live.mjs [maxMinutes=90]
 import fs from "node:fs";
 import { connect } from "./cdp.mjs";
+import { NEWS_DIR } from "../tools/paths.mjs";
 
-const MAX_MIN = +(process.argv[2] || 90), STALL_MIN = 12, DATA = "D:/botpress/news/stories.json";
+const MAX_MIN = +(process.argv[2] || 90), STALL_MIN = 12, DATA = NEWS_DIR + "/stories.json";
 const t0 = Date.now(), min = () => ((Date.now() - t0) / 60000).toFixed(1);
 const log = (...a) => console.log(`[${min()}m]`, ...a);
 const c = await connect(9224);
@@ -65,7 +66,7 @@ try {
   }
 } finally {
   const s = story && stories().find(x => x.id === story.id);
-  const file = s?.publishedFile && `D:/botpress/news/${s.publishedFile}`;
+  const file = s?.publishedFile && `${NEWS_DIR}/${s.publishedFile}`;
   console.log(JSON.stringify({ result, minutes: +min(), kicks, id: s?.id, status: s?.status, headline: s?.headline, beat: s?.beat,
     sources: s?.sources?.length, hasImage: !!s?.image, hasSocial: !!s?.social, steps: s?.history?.map(h => `${h.to}:${h.by}`),
     file, fileExists: !!file && fs.existsSync(file) }, null, 1));
