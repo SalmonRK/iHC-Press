@@ -24,6 +24,8 @@ public partial class MainWindow : Window
         SourceInitialized += (_, _) => ApplyTheme(SavedLight());
         Loaded += async (_, _) => await InitWeb();
         _ = Task.Run(async () => { while (true) { await Task.Delay(15000); try { await Monitor.LlmWatchdog(); } catch { } } });
+        // YouTube clips the bots asked for (newsdesk tool youtube_digest) are summarised here, on the host that has yt-dlp/NotebookLM
+        _ = Task.Run(async () => { while (true) { await Task.Delay(15000); try { await Settings.ProcessYtQueue(); } catch { } } });
     }
 
     [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
@@ -201,6 +203,27 @@ public partial class MainWindow : Window
             case "rk": return await RakazoClient.Call(Arg("path"), args?["input"]);
             case "news.list": return await Task.Run(Newsdesk.List);
             case "news.folder": Newsdesk.Folder(); return null;
+            case "settings.profiles": return await Settings.Profiles();
+            case "settings.models": return await Settings.Models(Arg("url"));
+            case "settings.profile.save": return Settings.SaveProfile(args!["profile"]!);
+            case "settings.profile.delete": Settings.DeleteProfile(Arg("id")); return null;
+            case "settings.profile.use":
+            {
+                var r = Settings.UseProfile(Arg("id"), _devtoolsPort);
+                // reply first, then quit: the launcher waits for this process before it starts the app again
+                _ = Dispatcher.InvokeAsync(async () => { await Task.Delay(1500); Application.Current.Shutdown(); });
+                return r;
+            }
+            case "sources.get": return Settings.Sources();
+            case "sources.save": return Settings.SaveSources(args!["sources"]!);
+            case "sources.seed": return Settings.SeedSources();
+            case "tools.status": return await Settings.ToolsStatus();
+            case "nlm.install": Settings.InstallNotebookLm(); return null;
+            case "nlm.login": Settings.LoginNotebookLm(); return null;
+            case "yt.digest": return await Settings.Digest(Arg("url"));
+            case "yt.list": return Settings.YtList();
+            case "yt.get": return Settings.YtGet(Arg("id"));
+            case "yt.folder": Settings.YtFolder(Arg("id")); return null;
             case "stt.warm": await Speech.Warm(); return null;
             case "stt": return await Speech.Transcribe(Arg("audio"));
             case "theme.set":

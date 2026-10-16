@@ -63,6 +63,7 @@ const App = (() => {
     folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     coin: '<circle cx="12" cy="12" r="8"/><path d="M14.5 9.5c-.5-.9-1.4-1.3-2.5-1.3-1.5 0-2.5.8-2.5 1.9 0 2.6 5 1.3 5 3.9 0 1.1-1 1.9-2.5 1.9-1.1 0-2-.4-2.5-1.3M12 6.5v1.7M12 15.8v1.7"/>',
     book: '<path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3M9 7h6M9 10.5h6"/>',
+    gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
     clip: '<path d="M20 11.5l-7.8 7.8a5 5 0 0 1-7.1-7.1l8.2-8.2a3.3 3.3 0 0 1 4.7 4.7l-8.2 8.2a1.7 1.7 0 0 1-2.4-2.4l7.4-7.4"/>',
   };
   const icon = (n, cls = "i") => `<svg class="${cls}" viewBox="0 0 24 24">${ICONS[n] || ""}</svg>`;
@@ -249,7 +250,9 @@ const App = (() => {
       <div class="nav ${current && current.type === "work" ? "active" : ""}" data-go="work">${icon("inbox")}
         <span class="grow">ศูนย์งาน</span>${store.waiting ? `<span class="badge" title="งานที่รอคุณ">${store.waiting}</span>` : ""}</div>
       <div class="nav ${current && current.type === "monitor" ? "active" : ""}" data-go="monitor">${icon("activity")}
-        <span class="grow">Monitor${q}</span><span class="dot ${llmDot}" title="LLM"></span><span class="dot ${rkDot}" title="Rakazo"></span></div>`;
+        <span class="grow">Monitor${q}</span><span class="dot ${llmDot}" title="LLM"></span><span class="dot ${rkDot}" title="Rakazo"></span></div>
+      <div class="nav ${current && current.type === "settings" ? "active" : ""}" data-go="settings">${icon("gear")}<span class="grow">ตั้งค่า</span>
+        <span class="muted nav-hint">${s && s.llm.source ? esc(String(s.llm.source).replace(/\s*\(.*\)$/, "")) : ""}</span></div>`;
     $("#sideFoot").querySelectorAll("[data-go]").forEach(n => n.onclick = () => go({ type: n.dataset.go }));
     $("#sideFoot").querySelectorAll("[data-mode]").forEach(b => b.onclick = () => setLlmMode(b.dataset.mode));
     $("#sideFoot").querySelectorAll("[data-theme-pick]").forEach(b => b.onclick = () => { Theme.set(b.dataset.themePick); renderSide(); });

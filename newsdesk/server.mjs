@@ -265,6 +265,52 @@ const TOOLS = {
       return { text: `เผยแพร่ ${s.id} แล้ว — ไฟล์ ${rel}`, data: { id: s.id, status: "published", publishedFile: rel } };
     },
   },
+  // The owner's prepared source list (app: ตั้งค่า > แหล่งข่าว writes $NEWS_DIR/sources.json). Read fresh on every call: no restart.
+  list_sources: {
+    description: "ดูรายการแหล่งข่าวที่เจ้าของเตรียมไว้ (เว็บ ข่าวประชาสัมพันธ์ ช่อง YouTube โซเชียล) เรียกก่อนเริ่มหาข่าวทุกครั้ง แล้วไล่ดูแหล่งในสายของคุณก่อนค้นเว็บทั่วไป (ทุกคนเรียกได้)",
+    inputSchema: S({ beat: BEAT }),
+    run(d, a) {
+      const beat = pickBeat(a);
+      let list = [];
+      try { list = JSON.parse(fs.readFileSync(path.join(d.dir, "sources.json"), "utf8")).sources || []; } catch (e) { if (e.code !== "ENOENT") bad("ไฟล์แหล่งข่าว sources.json รูปแบบไม่ถูกต้อง แจ้งมนุษย์"); }
+      const rows = list.filter(s => s && s.enabled !== false && s.url && (!beat || !s.beats?.length || s.beats.includes(beat)))
+        .map(s => ({ name: s.name, url: s.url, type: s.type || "web", beats: s.beats || [], note: s.note || "" }));
+      const kind = { web: "เว็บ", rss: "RSS", youtube: "YouTube", social: "โซเชียล", other: "อื่นๆ" };
+      const lines = rows.map(r => `- ${r.name} [${kind[r.type] || r.type}] ${r.url}${r.beats.length ? ` | สาย: ${r.beats.map(b => BEATS[b] || b).join(", ")}` : " | ทุกสาย"}${r.note ? ` | ${r.note}` : ""}`);
+      return { text: rows.length ? `แหล่งข่าวที่เตรียมไว้ ${rows.length} แหล่ง${beat ? ` (สาย ${BEATS[beat]})` : ""}:\n${lines.join("\n")}\nคลิป YouTube: ใช้ youtube_digest สรุปจากลิงก์ได้`
+        : "ยังไม่มีแหล่งข่าวที่เตรียมไว้สำหรับเงื่อนไขนี้ ให้ค้นจากเว็บตามกฎเดิม", data: { total: rows.length, sources: rows } };
+    },
+  },
+  // Bots can't run yt-dlp/NotebookLM (their computers are sandboxed): this queues a request file that the iHC-Press app on the
+  // host picks up (tools/yt-digest.mjs), and returns the finished digest from $NEWS_DIR/youtube/<videoId>/ on a later call.
+  youtube_digest: {
+    description: "สรุปคลิป YouTube จากลิงก์ เป็นภาษาไทย: สรุป ประเด็นสำคัญพร้อมเวลา ภาพหน้าจอ ณ เวลานั้น และข้ออ้างที่ต้องตรวจ "
+      + "เรียกครั้งแรกจะส่งคำขอ (ใช้เวลาราว 1-3 นาที) แล้วเรียกซ้ำด้วยลิงก์เดิมเพื่อรับผล; ข่าวที่ใช้เนื้อหาหรือภาพจากคลิปต้องให้เครดิตช่องและใส่ลิงก์คลิปใน sources",
+    inputSchema: S({ url: T("ลิงก์คลิป YouTube เช่น https://www.youtube.com/watch?v=..."), by: BY }, ["url", "by"]),
+    run(d, a) {
+      const url = str(a, "url", 300, { req: true }), by = str(a, "by", 60, { req: true });
+      const id = (url.match(/(?:v=|youtu\.be\/|shorts\/|live\/)([\w-]{11})/) || [])[1] || bad("ลิงก์นี้ไม่ใช่คลิป YouTube (ต้องมีรหัสคลิป 11 ตัว เช่น watch?v=xxxxxxxxxxx)");
+      const dir = path.join(d.dir, "youtube", id), reqDir = path.join(d.dir, "youtube", "requests"), req = path.join(reqDir, id + ".json");
+      const read = f => { try { return JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")); } catch { return null; } };
+      const dg = read("digest.json");
+      if (dg) {
+        const pts = dg.key_points.map(p => `- [${p.t}] ${p.point}`).join("\n");
+        const shots = dg.frames.map(f => `youtube/${id}/${f.file} (${f.t})`).join(", ");
+        return { text: `สรุปคลิป "${dg.title}" ช่อง ${dg.channel} (${dg.uploaded}) ${dg.url}\nสรุป: ${dg.summary}\nประเด็นสำคัญ:\n${pts}\nมุมข่าว: ${dg.news_angle}\n`
+          + `ต้องตรวจกับแหล่งต้นทาง: ${(dg.claims_to_verify || []).join(" | ") || "-"}\nภาพหน้าจอ (ในโฟลเดอร์ข่าว ให้ฝ่ายภาพอ้างชื่อไฟล์ในบรีฟภาพ): ${shots || "ไม่มี"}\n`
+          + `เครดิต: ช่อง ${dg.channel} — ใส่ ${dg.url} ใน sources ทุกครั้งที่ใช้`, data: { status: "done", ...dg } };
+      }
+      const er = read("error.json");
+      if (er && !fs.existsSync(req)) {
+        fs.rmSync(path.join(dir, "error.json"), { force: true }); // the next call retries
+        return { text: `สรุปคลิปนี้ไม่สำเร็จ: ${er.error} — ถ้าต้องการลองใหม่ ให้เรียก youtube_digest อีกครั้ง`, data: { status: "error", error: er.error } };
+      }
+      if (fs.existsSync(req)) return { text: `กำลังสรุปคลิป ${id} อยู่ (ส่งคำขอเมื่อ ${JSON.parse(fs.readFileSync(req, "utf8")).at}) เรียกใหม่อีก 1-2 นาที`, data: { status: "pending", id } };
+      fs.mkdirSync(reqDir, { recursive: true });
+      writeAtomic(req, JSON.stringify({ id, url: `https://www.youtube.com/watch?v=${id}`, by, at: new Date(d.now()).toISOString() }));
+      return { text: `ส่งคำขอสรุปคลิป ${id} แล้ว ระบบจะสรุปให้ภายใน 1-3 นาที (ต้องเปิดแอป iHC-Press อยู่) เรียก youtube_digest ด้วยลิงก์เดิมอีกครั้งเพื่อรับผล`, data: { status: "queued", id } };
+    },
+  },
 };
 
 const err = text => ({ content: [{ type: "text", text: "ผิดพลาด: " + text }], isError: true });
@@ -298,7 +344,7 @@ function rpc(d, msg) {
   switch (msg.method) {
     case "initialize": return ok({ protocolVersion: PROTOCOLS.includes(msg.params?.protocolVersion) ? msg.params.protocolVersion : PROTOCOLS[0], capabilities: { tools: { listChanged: false } },
       serverInfo: { name: "newsdesk", version: "1.0.0" },
-      instructions: "โต๊ะข่าวไอที/AI ภาษาไทย — เรื่องข่าวเดินตามสถานะ pitched → assigned → drafting → factcheck → editing → ready → published (ยกเลิกด้วย killed). ถ้าเครื่องมือตอบ 'ผิดพลาด' ให้อ่านข้อความ แก้ค่าที่ส่งตามที่บอก แล้วเรียกใหม่ (ยกเว้น 'ระบบขัดข้องภายใน' ให้แจ้งมนุษย์)" });
+      instructions: "โต๊ะข่าวไอที/AI ภาษาไทย — เรื่องข่าวเดินตามสถานะ pitched → assigned → drafting → factcheck → editing → ready → published (ยกเลิกด้วย killed). ก่อนหาข่าวให้เรียก list_sources ดูแหล่งข่าวที่เจ้าของเตรียมไว้ก่อน และใช้ youtube_digest สรุปคลิป YouTube. ถ้าเครื่องมือตอบ 'ผิดพลาด' ให้อ่านข้อความ แก้ค่าที่ส่งตามที่บอก แล้วเรียกใหม่ (ยกเว้น 'ระบบขัดข้องภายใน' ให้แจ้งมนุษย์)" });
     case "ping": return ok({});
     case "tools/list": return ok({ tools: Object.entries(TOOLS).map(([name, t]) => ({ name, description: t.description, inputSchema: t.inputSchema })) });
     case "tools/call": return ok(callTool(d, msg.params?.name, msg.params?.arguments));
@@ -365,6 +411,32 @@ async function selftest() {
   const story = id => good("get_story", { id });
   const READY = { social: "โพสต์ข่าว", image: "ภาพหลัก: ภาพข่าว" }; // ready also needs the social post and the image brief
   const quiet = fn => { const ce = console.error; console.error = () => {}; try { return fn(); } finally { console.error = ce; } }; // expected server-side failures are logged; keep selftest output clean
+
+  await T("list_sources: none, then filtered by beat (all-beat entries always show, disabled hidden)", () => {
+    assert.equal(good("list_sources", {}).total, 0);
+    fs.writeFileSync(path.join(dir, "sources.json"), JSON.stringify({ sources: [
+      { name: "AMD", url: "https://amd.com/news", type: "web", beats: ["gadget"] }, { name: "ทุกสาย", url: "https://x.com/a", beats: [] },
+      { name: "ปิด", url: "https://off.example", beats: ["gadget"], enabled: false }, { name: "AI", url: "https://ai.example", beats: ["ai"] }] }));
+    assert.deepEqual(good("list_sources", { beat: "gadget" }).sources.map(s => s.name), ["AMD", "ทุกสาย"]);
+    assert.equal(good("list_sources", {}).total, 3);
+    fs.rmSync(path.join(dir, "sources.json"));
+  });
+  await T("youtube_digest: bad link, queue once, pending, done, error retries", () => {
+    refuse("youtube_digest", { url: "https://example.com/x", by: "b" }, /ไม่ใช่คลิป YouTube/);
+    const v = "https://youtu.be/TKhiNkloVr0";
+    assert.equal(good("youtube_digest", { url: v, by: "นักข่าว" }).status, "queued");
+    assert.ok(fs.existsSync(path.join(dir, "youtube", "requests", "TKhiNkloVr0.json")));
+    assert.equal(good("youtube_digest", { url: "https://www.youtube.com/watch?v=TKhiNkloVr0", by: "นักข่าว" }).status, "pending");
+    fs.rmSync(path.join(dir, "youtube", "requests", "TKhiNkloVr0.json"));
+    fs.mkdirSync(path.join(dir, "youtube", "TKhiNkloVr0"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "youtube", "TKhiNkloVr0", "error.json"), JSON.stringify({ error: "ไม่มีคำบรรยาย" }));
+    assert.equal(good("youtube_digest", { url: v, by: "b" }).status, "error");
+    assert.equal(good("youtube_digest", { url: v, by: "b" }).status, "queued"); // error cleared: the next call asks again
+    fs.writeFileSync(path.join(dir, "youtube", "TKhiNkloVr0", "digest.json"), JSON.stringify({ title: "คลิป", channel: "ช่อง", uploaded: "2026-05-02",
+      url: "https://www.youtube.com/watch?v=TKhiNkloVr0", summary: "สรุป", key_points: [{ t: "1:59", point: "จุด" }], news_angle: "มุม", frames: [{ t: "1:59", file: "frames/001m59s.jpg" }] }));
+    const r = call("youtube_digest", { url: v, by: "b" });
+    assert.equal(r.structuredContent.result.status, "done"); assert.match(r.content[0].text, /youtube\/TKhiNkloVr0\/frames\/001m59s\.jpg/);
+  });
 
   // happy path A: pitch -> ... -> publish, then the markdown file
   const srcs2 = [{ url: "https://example.com/gemma-4", title: "ประกาศ Gemma 4 [ทางการ]" }, "https://example.org/a"];
@@ -693,9 +765,9 @@ async function selftest() {
       assert.equal((await rpcCall("initialize", { protocolVersion: "1999-01-01" })).result.protocolVersion, "2025-06-18");
       assert.equal((await rpcCall("initialize", {})).result.protocolVersion, "2025-06-18");
     });
-    await T("http: tools/list returns exactly 5 tools", async () => {
+    await T("http: tools/list returns exactly 7 tools", async () => {
       const tools = (await rpcCall("tools/list")).result.tools;
-      assert.deepEqual(tools.map(x => x.name).sort(), ["get_story", "list_stories", "pitch_story", "publish_story", "update_story"]);
+      assert.deepEqual(tools.map(x => x.name).sort(), ["get_story", "list_sources", "list_stories", "pitch_story", "publish_story", "update_story", "youtube_digest"]);
       assert.ok(tools.every(x => x.description && x.inputSchema.type === "object"));
     });
     await T("http: tools/call pitch_story works, errors come back as isError text", async () => {
