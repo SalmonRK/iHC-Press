@@ -134,6 +134,7 @@ static class RakazoClient
                 throw new InvalidOperationException("ล็อกอิน Rakazo ไม่ได้ (Rakazo ยังไม่พร้อม หรือบัญชีเจ้าของใน owner.json ไม่ตรงกับฐานข้อมูล)");
             var me = await Rpc("me", null, false);
             if (me?["needsModel"]?.GetValue<bool>() == true) await ConnectModel();
+            else await FollowLlmJson();
             _ready = true;
         }
         finally { Gate.Release(); }
@@ -155,6 +156,15 @@ static class RakazoClient
         Directory.CreateDirectory(Path.GetDirectoryName(CredFile)!);
         File.WriteAllText(CredFile, new JsonObject { ["email"] = Email, ["password"] = password }.ToJsonString());
         return password;
+    }
+
+    // llm.json switched to another model of the same provider (e.g. OpenThai on the Spark -> qwen3.6 on Ollama): reconnect so the
+    // bots (which use the default model) follow it. A default on another provider is a choice made in the app (synthetic, bcai): kept.
+    static async Task FollowLlmJson()
+    {
+        var d = (await Rpc("models/credentials", null, false))!.AsArray().FirstOrDefault(c => c!["isDefault"]!.GetValue<bool>());
+        if (d?["provider"]?.GetValue<string>() == LlmConfig.Provider && d["modelId"]?.GetValue<string>() != LlmConfig.ModelId)
+            await ConnectModel();
     }
 
     static async Task ConnectModel()

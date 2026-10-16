@@ -56,7 +56,7 @@
         <div class="grid g4">${gauge("vram", "VRAM")}${gauge("gpu", "GPU")}${gauge("cpu", "CPU")}${gauge("ram", "RAM")}</div>
         <div class="grid g2" style="margin-top:16px">
           <div class="card" style="animation-delay:.05s">
-            <h3>${icon("sparkles")} LLM · llama-server :8080 <span class="grow"></span><span class="chip" id="llm-chip">…</span></h3>
+            <h3>${icon("sparkles")} LLM · <span id="llm-source">llama-server :8080</span> <span class="grow"></span><span class="chip" id="llm-chip">…</span></h3>
             <div class="row"><div><div class="big"><span id="llm-tps">0</span><small>t/s เฉลี่ย</small></div>
               <div class="muted" id="llm-model">&nbsp;</div></div><div class="grow"></div>
               <div style="text-align:right"><div class="muted" style="font-size:12px;margin-bottom:6px">ช่องทำงาน</div><div class="slots" id="llm-slots"></div>
@@ -147,6 +147,7 @@
       chip.innerHTML = `<span class="dot ${ready ? "good" : l.process ? "warn" : "bad"}"></span>${esc(l.health)}`;
       animateNumber($("#llm-tps"), l.tps, 1);
       $("#llm-model").textContent = ready ? "model: " + l.model : "—";
+      if (l.source) $("#llm-source").textContent = l.source;
       $("#llm-slots").innerHTML = Array.from({ length: Math.max(l.slots, 2) }, (_, i) => `<div class="slot ${i < l.busy ? "busy" : ""}"></div>`).join("");
       $("#llm-queue").textContent = `ทำงาน ${l.busy}/${l.slots} · คิวรอ ${l.deferred}`;
       $("#llm-tokens").textContent = `ผลิตรวม ${l.tokensOut.toLocaleString()} tokens`;

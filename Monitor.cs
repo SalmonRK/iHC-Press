@@ -10,7 +10,7 @@ using System.Text.Json.Nodes;
 namespace BotPress;
 
 public record Gpu(string Name, int VramUsed, int VramTotal, int Util, int Temp, double Power);
-public record Llm(bool Process, string Health, string Model, int Slots, int Busy, int Deferred, double Tps, long TokensOut);
+public record Llm(bool Process, string Health, string Model, int Slots, int Busy, int Deferred, double Tps, long TokensOut, string Source = "");
 public record Box(string Name, bool Bot, string State, string Status, string Cpu, string Mem);
 public record Rakazo(bool KeepAlive, string Health, List<Box> Boxes);
 public record Distro(string Name, string State);
@@ -91,6 +91,7 @@ public static class Monitor
     static async Task<Llm> ReadLlm()
     {
         var health = await Get("/health", false);
+        if (health == null && LlmConfig.Remote && await Get("/api/version", false) != null) return await ReadOllama();
         // remote: no process of ours to find; a healthy server counts as "running" (autostart and selftest read this flag)
         bool proc = LlmConfig.Remote ? health != null && health.Contains("ok") : LlmProcs().Length > 0;
         if (health == null || !health.Contains("ok"))
@@ -108,6 +109,22 @@ public static class Monitor
         var m = ParseMetrics(await Get("/metrics", true) ?? "");
         return new(proc, "พร้อม", model, slots, busy, (int)m.GetValueOrDefault("requests_deferred"),
             m.GetValueOrDefault("predicted_tokens_seconds"), (long)m.GetValueOrDefault("tokens_predicted_total"));
+    }
+
+    // Ollama has no /health, /slots or /metrics: up = /api/version answers. /api/ps lists the models loaded right now (it
+    // loads on the first request and unloads after keep_alive), so an idle server shows the configured model as not loaded.
+    static async Task<Llm> ReadOllama()
+    {
+        var model = LlmConfig.ModelId + " (ยังไม่โหลด)";
+        try
+        {
+            var loaded = JsonDocument.Parse(await Get("/api/ps", false) ?? "{}").RootElement.GetProperty("models").EnumerateArray()
+                .FirstOrDefault(m => m.GetProperty("name").GetString() == LlmConfig.ModelId);
+            if (loaded.ValueKind == JsonValueKind.Object)
+                model = LlmConfig.ModelId + (loaded.TryGetProperty("context_length", out var c) ? $" · ctx {c.GetInt32() / 1024}K" : "");
+        }
+        catch { }
+        return new(true, "พร้อม", model, 0, 0, 0, 0, 0);
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -133,7 +150,7 @@ public static class Monitor
         GlobalMemoryStatusEx(ref mem);
         const double GB = 1024.0 * 1024 * 1024;
         var wsl = ParseWsl(Run("wsl.exe", "-l -v", Encoding.Unicode));
-        return new(gpu, Cpu(), Math.Round((mem.Total - mem.Avail) / GB, 1), Math.Round(mem.Total / GB, 1), await ReadLlm(), wsl, await ReadRakazo(wsl));
+        return new(gpu, Cpu(), Math.Round((mem.Total - mem.Avail) / GB, 1), Math.Round(mem.Total / GB, 1), await ReadLlm() with { Source = LlmConfig.Remote ? LlmConfig.Label : "llama-server :8080" }, wsl, await ReadRakazo(wsl));
     }
 
     static string Sh(string args) => Run("wsl.exe", $"-d {DistroName} --exec bash {RakazoSh} {args}", Encoding.UTF8);
