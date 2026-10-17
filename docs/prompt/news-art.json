@@ -1,0 +1,100 @@
+{
+  "about": "iHC-Press news artwork assets for Google Flow (Nano Banana 2.1). Every image is text-free: the Thai headline, tags and credits are laid on top by tools/news-art (HTML template + Noto Sans Thai), because Flow garbles Thai letters. Full prompt = style + item.prompt + suffix (one line).",
+  "style": "Cinematic semi-realistic 3D render for a premium Thai technology and computer news outlet, editorial key visual, deep black studio background, dramatic brand red #C81E23 rim and accent lighting with crisp white highlights, glossy reflective materials, high detail, shallow depth of field, cohesive black white and red color palette.",
+  "suffix": "No text, no letters, no numbers, no logos, no brand names, no watermark, no readable screen content, full-frame image edge to edge with no black letterbox bars.",
+  "items": [
+    {
+      "id": "beat-ai",
+      "kind": "illustration",
+      "ratio": "16:9",
+      "beat": "ai",
+      "prompt": "Subject: a translucent human-brain shape woven from thousands of glowing red light filaments, hovering above a black AI accelerator chip on a dark motherboard, tiny particles of light rising, subject centered with generous empty dark space above and below for a headline overlay, safe for a center square crop."
+    },
+    {
+      "id": "beat-gadget",
+      "kind": "illustration",
+      "ratio": "16:9",
+      "beat": "gadget",
+      "prompt": "Subject: a sleek black foldable smartphone, a smartwatch and a pair of wireless earbuds floating at playful angles above a reflective black surface, thin red light edges tracing each device, screens dark with soft red glow, subject centered with empty dark space above and below for a headline overlay, safe for a center square crop."
+    },
+    {
+      "id": "beat-software",
+      "kind": "illustration",
+      "ratio": "16:9",
+      "beat": "software",
+      "prompt": "Subject: an open black laptop surrounded by floating translucent glass app windows and rounded interface cards made only of abstract colored bars and shapes, red and white glow, depth layers, subject centered with empty dark space above and below for a headline overlay, safe for a center square crop."
+    },
+    {
+      "id": "beat-startup",
+      "kind": "illustration",
+      "ratio": "16:9",
+      "beat": "startup",
+      "prompt": "Subject: a small glossy red and white rocket lifting off from a black laptop keyboard, its glowing exhaust trail curving upward like a rising growth line, sparks and soft smoke, subject centered with empty dark space above and below for a headline overlay, safe for a center square crop."
+    },
+    {
+      "id": "beat-security",
+      "kind": "illustration",
+      "ratio": "16:9",
+      "beat": "security",
+      "prompt": "Subject: a glowing red holographic shield with a padlock emblem standing in front of a dark wall of server racks, fragments of digital particles bouncing off the shield, tense cinematic mood, subject centered with empty dark space above and below for a headline overlay, safe for a center square crop."
+    },
+    {
+      "id": "beat-gaming",
+      "kind": "illustration",
+      "ratio": "16:9",
+      "beat": "gaming",
+      "prompt": "Subject: a black gaming PC tower with a tempered glass side and red RGB fans, a wireless game controller and a gaming headset on a dark desk, red light spill and soft haze, subject centered with empty dark space above and below for a headline overlay, safe for a center square crop."
+    },
+    {
+      "id": "beat-cloud",
+      "kind": "illustration",
+      "ratio": "16:9",
+      "beat": "cloud",
+      "prompt": "Subject: a large stylized cloud formed from glowing white and red particles with miniature black server racks visible inside it, thin streams of light flowing down to a laptop and a phone below, subject centered with empty dark space above and below for a headline overlay, safe for a center square crop."
+    },
+    {
+      "id": "beat-policy",
+      "kind": "illustration",
+      "ratio": "16:9",
+      "beat": "policy",
+      "prompt": "Subject: technology regulation concept, a black microchip and a white classical stone column balanced on two sides of an elegant black and red balance scale on a dark pedestal, calm serious mood, subject centered with empty dark space above and below for a headline overlay, safe for a center square crop."
+    },
+    {
+      "id": "beat-hardware",
+      "kind": "illustration",
+      "ratio": "16:9",
+      "beat": "other",
+      "prompt": "Subject: macro close-up of a desktop CPU being lowered into a motherboard socket, a high-end graphics card with red accents beside it, metallic heatspreader reflections and red light, subject centered with empty dark space above and below for a headline overlay, safe for a center square crop."
+    },
+    {
+      "id": "frame-16x9",
+      "kind": "frame",
+      "ratio": "16:9",
+      "prompt": "Subject: a decorative border frame only, thin glowing red neon circuit-board traces and small solder-pad dots hugging the very outer edge of the image on all four sides, very thin, occupying only the outer five percent with brighter clusters in the corners, the entire center area, at least ninety percent of the image, is perfectly flat solid pure black and completely empty, flat front view, graphic overlay asset."
+    },
+    {
+      "id": "frame-1x1",
+      "kind": "frame",
+      "ratio": "1:1",
+      "prompt": "Subject: a decorative square border frame only, thin glowing red neon circuit-board traces and small solder-pad dots hugging the very outer edge of the image on all four sides, very thin, occupying only the outer five percent with brighter clusters in the corners, the entire center area, at least ninety percent of the image, is perfectly flat solid pure black and completely empty, flat front view, graphic overlay asset."
+    },
+    {
+      "id": "frame-3x4",
+      "kind": "frame",
+      "ratio": "3:4",
+      "prompt": "Subject: a decorative vertical border frame only, thin glowing red neon circuit-board traces and small solder-pad dots hugging the very outer edge of the image on all four sides, very thin, occupying only the outer five percent with brighter clusters in the corners, the entire center area, at least ninety percent of the image, is perfectly flat solid pure black and completely empty, flat front view, graphic overlay asset."
+    },
+    {
+      "id": "tex-panel",
+      "kind": "texture",
+      "ratio": "1:1",
+      "prompt": "Subject: abstract premium background texture, matte carbon-black surface with a faint hexagon grid, thin glowing red circuit traces running in from the bottom edge and the left edge, the upper and central area smooth and mostly empty dark, minimal, flat front view."
+    },
+    {
+      "id": "tex-breaking",
+      "kind": "texture",
+      "ratio": "16:9",
+      "prompt": "Subject: abstract breaking-news energy background, bright red horizontal light streaks and speed lines racing across a black background, a few white sparks, strong motion blur, the middle band calmer and darker, flat front view."
+    }
+  ]
+}

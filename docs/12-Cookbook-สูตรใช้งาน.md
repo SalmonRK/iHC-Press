@@ -165,6 +165,14 @@ node tools\yt-digest.mjs "<url>" --engine notebooklm                            
 4. ถ้าบอทควรเรียกเครื่องมือนี้ในงานประจำ ให้เพิ่มใน prompt ของ `seed-bots.mjs` แล้ว `--rewrite` (สูตร 8)
 5. ถ้าต้องให้เครื่อง Windows ทำงานแทน (เช่น yt-dlp) ใช้แบบคิวไฟล์เหมือน `youtube_digest`: เขียนคำขอใน `/news/...`, ให้ `Settings.cs` หยิบใน loop 15 วินาที แล้วเขียนผลกลับ
 
+## 14. ทำภาพข่าวพร้อมโพสต์ (artwork)
+
+1. ดู id ข่าวในโต๊ะข่าว (เช่น `20261014-01`)
+2. `cd D:\SalmonRK\BotPress\iHC-Press` แล้ว `node tools\news-art\render.mjs --story 20261014-01` → ได้ 16:9, 1:1, 4:5 ใน `D:\AI-ART\BotPress\data\news\art\20261014-01\`
+3. ข่าวด่วนเพิ่ม `--variant breaking` · การ์ดสรุปใช้ `--variant card --points "ข้อ1|ข้อ2|ข้อ3"` · ใช้ภาพของข่าวเองด้วย `--art <ไฟล์>`
+4. ถ้าคำไทยถูกตัดกลางคำ ให้ครอบด้วย `{...}` ในหัวข่าว หรือเพิ่มคำในรายการ `KEEP` ของ `tools\news-art\template.html`
+5. รายละเอียดและวิธีสร้างภาพประกอบใหม่: [13](13-Artwork-ข่าว.md)
+
 ## 13. สร้างอวาตาร์หรือภาพแบรนด์ใหม่
 
 1. prompt ทั้งหมดอยู่ที่ [prompt/README.md](prompt/README.md) และ `prompt/avatars.json`

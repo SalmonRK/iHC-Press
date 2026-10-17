@@ -1,0 +1,130 @@
+<!doctype html>
+<!-- iHC-Press news artwork. render.mjs fills #data and screenshots this page at the format's exact size.
+     Flow makes the pictures (text-free); every letter here is real text in Noto Sans Thai, so Thai always renders correctly. -->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: "Noto Sans Thai"; src: url("fonts/NotoSansThai.ttf") format("truetype"); font-weight: 100 900; }
+  :root { --red: #C81E23; --black: #000; --white: #fff; --n100: #F5F5F5; --n300: #D4D4D4; --n600: #525252; --n800: #262626; --pad: 56px; --padx: var(--pad); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: var(--w); height: var(--h); overflow: hidden; background: var(--black); }
+  body { font-family: "Noto Sans Thai", sans-serif; color: var(--white); position: relative; text-shadow: 0 2px 14px rgba(0,0,0,.85); }
+  .tag, .flash, .date { text-shadow: none; }
+
+  .layer { position: absolute; inset: 0; }
+  .art { background-size: cover; background-position: center; }
+  .frame { background-size: 100% 100%; mix-blend-mode: screen; opacity: .6; }   /* black centre disappears, red circuit edge glows */
+  .shade { background: linear-gradient(to top, rgba(0,0,0,.96) 0%, rgba(0,0,0,.88) 30%, rgba(0,0,0,.35) 58%, rgba(0,0,0,0) 72%); }
+  .topshade { background: linear-gradient(to bottom, rgba(0,0,0,.7), rgba(0,0,0,0) 18%); }
+
+  .mast { position: absolute; top: var(--pad); left: var(--padx); right: var(--padx); display: flex; justify-content: space-between; align-items: flex-start; }
+  .logo { line-height: 1; background: rgba(0,0,0,.62); padding: 12px 18px 12px 16px; border-radius: 10px; border-left: 4px solid var(--red); margin: -12px 0 0 -16px; }
+  .logo b { font-size: calc(var(--u) * 1.5); font-weight: 900; letter-spacing: -.02em; }
+  .logo b .r { color: var(--red); }
+  .logo small { display: block; margin-top: 6px; font-size: calc(var(--u) * .62); font-weight: 500; color: var(--n300); letter-spacing: .01em; }
+  .date { font-size: calc(var(--u) * .7); font-weight: 600; color: var(--n100); background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.18); padding: 6px 14px; border-radius: 999px; }
+
+  .story { position: absolute; left: var(--padx); right: var(--padx); bottom: calc(var(--pad) + var(--u) * 1.9); }
+  .tag { display: inline-flex; align-items: center; gap: 10px; background: var(--red); color: var(--white); font-weight: 700; font-size: calc(var(--u) * .78); padding: 6px 18px 8px; border-radius: 6px; }
+  .tag::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--white); }
+  .headline { margin-top: 18px; padding-left: 22px; border-left: 8px solid var(--red); font-weight: 800; font-size: calc(var(--u) * 2.6); line-height: 1.32; max-height: calc(var(--u) * 2.6 * 1.32 * var(--lines) + 2px); overflow: hidden; text-wrap: balance; }
+  .dek { margin-top: 14px; padding-left: 30px; font-size: calc(var(--u) * .95); line-height: 1.55; color: var(--n300); font-weight: 400; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .points { margin-top: 22px; padding-left: 30px; list-style: none; display: grid; gap: 12px; }
+  .points li { position: relative; padding-left: 30px; font-size: calc(var(--u) * 1.02); line-height: 1.5; color: var(--n100); }
+  .points li::before { content: ""; position: absolute; left: 0; top: .55em; width: 14px; height: 14px; border-radius: 3px; background: var(--red); }
+
+  .foot { position: absolute; left: var(--padx); right: var(--padx); bottom: var(--pad); display: flex; justify-content: space-between; align-items: center; font-size: calc(var(--u) * .66); color: var(--n300); border-top: 1px solid rgba(255,255,255,.18); padding-top: 12px; }
+  .foot .brand { font-weight: 700; color: var(--white); }
+  .foot .brand .r { color: var(--red); }
+
+  /* square / portrait: picture on top, text on a dark textured panel below */
+  body.split .art { bottom: auto; height: var(--arth); }
+  body.split .panel { top: auto; height: calc(var(--h) - var(--arth) + 120px); background-size: cover; background-position: center bottom; }
+  body.split .panel::before { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, #000 0, #000 130px, rgba(0,0,0,.62) 320px, rgba(0,0,0,.5) 100%); }
+  body.split .seam { top: calc(var(--arth) - 220px); height: 220px; bottom: auto; background: linear-gradient(to bottom, rgba(0,0,0,0), #000); }
+
+  /* breaking: red streak background, picture in a framed card, big red banner */
+  body.breaking .bg { background-size: cover; background-position: center; filter: saturate(1.15); }
+  body.breaking.wide .story { right: calc(var(--w) * .42 + var(--padx) * 1.6); }
+  body.breaking .card { position: absolute; border: 4px solid var(--red); border-radius: 18px; overflow: hidden; box-shadow: 0 0 60px rgba(200,30,35,.55); background-size: cover; background-position: center; }
+  .flash { display: inline-block; background: var(--white); color: var(--red); font-weight: 900; font-size: calc(var(--u) * 1.15); padding: 4px 22px 8px; border-radius: 6px; letter-spacing: .02em; margin-right: 12px; }
+
+  /* card: text-only explainer on the circuit texture */
+  .nb { white-space: nowrap; }
+  body.card .scrim { background: radial-gradient(ellipse at 30% 40%, rgba(0,0,0,.72), rgba(0,0,0,.45) 70%); }
+  body.card .bg { background-size: cover; background-position: center; }
+  body.card .story { top: calc(50% + var(--u) * .8); bottom: auto; transform: translateY(-50%); }  /* centred between masthead and footer */
+</style>
+</head>
+<body>
+<script id="data" type="application/json">{}</script>
+<script>
+const d = JSON.parse(document.getElementById("data").textContent);
+const F = { "16x9": [1600, 900, 40], "1x1": [1080, 1080, 34], "4x5": [1080, 1350, 36] }[d.format];
+const [W, H, U] = F;
+const root = document.documentElement.style;
+root.setProperty("--w", W + "px"); root.setProperty("--pad", Math.round(H * .085) + "px"); root.setProperty("--padx", Math.round(W * .075) + "px"); root.setProperty("--h", H + "px"); root.setProperty("--u", U + "px");
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+// Chrome's Thai dictionary does not know many tech loanwords and splits them mid-word ("อัป|เกรด"), so keep these whole;
+// a writer can also protect any phrase by wrapping it in {braces}
+const KEEP = ["อัปเกรด", "อัพเกรด", "อัปเดต", "อัพเดท", "ซีพียู", "การ์ดจอ", "เมนบอร์ด", "โน้ตบุ๊ก", "สมาร์ตโฟน", "สมาร์ทโฟน", "แล็ปท็อป",
+  "ฮาร์ดแวร์", "ซอฟต์แวร์", "สตาร์ทอัพ", "สตาร์ตอัป", "คลาวด์", "ไซเบอร์", "แอปพลิเคชัน", "ดีเวลอปเปอร์", "เซิร์ฟเวอร์", "ชิปเซ็ต", "แรม", "สตรีมมิง", "ส่วนตัว", "นักพัฒนา", "ปัญญาประดิษฐ์", "ความเป็นส่วนตัว", "ต้องรู้", "รุ่นใหม่", "เปิดตัว"];
+const txt = s => esc(s).replace(/\{([^{}]+)\}/g, '<span class="nb">$1</span>')
+  .replace(new RegExp(KEEP.join("|"), "g"), w => `<span class="nb">${w}</span>`);
+const url = p => `url('${p.replace(/\\/g, "/").replace(/'/g, "%27")}')`; // single quotes: this lands inside style="..."
+const logo = `<div class="logo"><b><span class="r">i</span>H<span class="r">C</span>-Press</b><small>ข่าวเทคโนโลยีและคอมพิวเตอร์</small></div>`;
+const mast = `<div class="mast">${logo}${d.date ? `<div class="date">${esc(d.date)}</div>` : ""}</div>`;
+const foot = `<div class="foot"><span>${d.source ? "ที่มา: " + esc(d.source) : ""}</span><span class="brand"><span class="r">i</span>H<span class="r">C</span>-Press · ในเครือ iHAVECPU</span></div>`;
+const tag = d.beat ? `<span class="tag">${esc(d.beat)}</span>` : "";
+const points = (d.points || []).slice(0, 3).map(p => `<li>${txt(p)}</li>`).join("");
+const split = d.format !== "16x9";
+let html = "";
+if (d.variant === "breaking") {
+  document.body.className = split ? "breaking" : "breaking wide";
+  const card = split ? `left:var(--padx);right:var(--padx);top:calc(var(--pad) + var(--u)*3);height:${Math.round(H * .4)}px`
+                     : `right:var(--padx);top:calc(var(--pad) + var(--u)*2.6);width:${Math.round(W * .42)}px;height:${Math.round(H * .44)}px`;
+  html = `<div class="layer bg" style="background-image:${url(d.assets.breaking)}"></div>
+    <div class="layer shade"></div>
+    <div class="card" style="${card};background-image:${url(d.art)}"></div>
+    ${mast}
+    <div class="story"><span class="flash">ข่าวด่วน</span>${tag}<h1 class="headline">${txt(d.headline)}</h1>${d.dek ? `<p class="dek">${txt(d.dek)}</p>` : ""}</div>${foot}`;
+} else if (d.variant === "card") {
+  document.body.className = "card";
+  html = `<div class="layer bg" style="background-image:${url(d.assets.panel)}"></div>
+    <div class="layer scrim"></div>
+    <div class="layer frame" style="background-image:${url(d.assets.frame)}"></div>
+    ${mast}
+    <div class="story">${tag}<h1 class="headline">${txt(d.headline)}</h1>${points ? `<ul class="points">${points}</ul>` : d.dek ? `<p class="dek">${txt(d.dek)}</p>` : ""}</div>${foot}`;
+} else {
+  document.body.className = split ? "split" : "";
+  if (split) root.setProperty("--arth", Math.round(H * (d.format === "4x5" ? .56 : .52)) + "px");
+  html = `${split ? `<div class="layer panel" style="background-image:${url(d.assets.panel)}"></div>` : ""}
+    <div class="layer art" style="background-image:${url(d.art)}"></div>
+    ${split ? `<div class="layer seam"></div>` : `<div class="layer shade"></div>`}
+    <div class="layer topshade"></div>
+    <div class="layer frame" style="background-image:${url(d.assets.frame)}"></div>
+    ${mast}
+    <div class="story">${tag}<h1 class="headline">${txt(d.headline)}</h1>${d.dek ? `<p class="dek">${txt(d.dek)}</p>` : ""}</div>${foot}`;
+}
+document.body.insertAdjacentHTML("beforeend", html);
+
+// shrink the headline until it fits its line budget (Chrome breaks Thai at word boundaries by dictionary);
+// at the smallest size a too-long headline is clamped with an ellipsis instead of being cut mid-line
+const LINES = +d.lines || (d.format === "16x9" && d.variant !== "breaking" ? 3 : 4);
+root.setProperty("--lines", LINES);
+// fonts.ready alone can resolve before the face is even requested, so the fit would measure the fallback font
+Promise.all([400, 700, 800, 900].map(w => document.fonts.load(`${w} 40px "Noto Sans Thai"`, "ทดสอบ Test"))).then(() => document.fonts.ready).then(() => {
+  const h = document.querySelector(".headline");
+  let size = U * (d.format === "16x9" ? 2.6 : 2.2);
+  const set = () => { h.style.fontSize = size + "px"; h.style.maxHeight = (size * 1.32 * LINES + 2) + "px"; };
+  // count lines instead of comparing scrollHeight: Thai vowels and tone marks overhang the line box, so scrollHeight is
+  // always a few px taller than clientHeight and the old check shrank every headline to the minimum
+  const fits = () => { h.style.maxHeight = "none"; const n = Math.round(h.getBoundingClientRect().height / (size * 1.32)); set(); return n <= LINES; };
+  while (!fits() && size > U * 1.15) { size -= 2; set(); }
+  if (!fits()) Object.assign(h.style, { display: "-webkit-box", webkitBoxOrient: "vertical", webkitLineClamp: String(LINES) });
+  document.title = "ready";
+});
+</script>
+</body>
+</html>
