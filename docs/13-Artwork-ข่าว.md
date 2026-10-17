@@ -31,7 +31,7 @@ flowchart LR
   subgraph A["A. ผลิต asset (ทำครั้งเดียว · คนสั่ง)"]
     P["docs/prompt/news-art.json<br/>style + prompt + suffix"] --> G["tools/gen-news-art.mjs<br/>(workspace)"]
     G -->|CDP :9222| F["Google Flow ใน Chrome Canary<br/>ที่ล็อกอินไว้"]
-    F --> R["ภาพดิบ 1376×768<br/>D:\AI-ART\...\news-art\"]
+    F --> R["ภาพดิบ 1376×768<br/>D:\AI-ART\...\news-art"]
     R --> C{"ตรวจ contact sheet<br/>ภาพตรงชื่อไหม"}
     C --> PA["prepare-assets.py<br/>ตัด letterbox · ย่อ · jpg q86"]
     PA --> AS["tools/news-art/assets/<br/>(อยู่ในรีโป)"]
