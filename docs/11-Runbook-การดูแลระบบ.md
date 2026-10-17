@@ -185,6 +185,10 @@ node tests\e2e.mjs D:\tmp                          # 18/18
 - แอปอ่านหน้าจอจาก `D:\AI-ART\BotPress\app\ui\` (publish คัดลอกให้) แก้แค่ `ui\` จึงต้อง publish ใหม่ หรือระหว่างพัฒนาให้ตั้ง `BOTPRESS_UI_DIR=D:\SalmonRK\BotPress\iHC-Press\ui` ก่อนเปิดแอป แล้วปิดเปิดแอปเพื่อดูผล
 - dotnet ใน PATH (`C:\Program Files\dotnet`, SDK 10.0.401) ใช้ได้ ไม่ต้องใช้ path ใน `%LOCALAPPDATA%` ตามที่ README ต้นฉบับเขียน
 
+### 5.1 หลัง publish (ถ้าแก้ `newsdesk\server.mjs`)
+
+container โต๊ะข่าวอ่านโค้ดจาก `app\newsdesk\` ตอนเริ่มเท่านั้น: `wsl -d Ubuntu-24.04 -- docker restart botpress-newsdesk` แล้วตรวจ `docker exec botpress-newsdesk grep -c VOICE_LINT //app/server.mjs` · ถ้าแก้ prompt บอท (`seed-bots.mjs` หรือ brand voice) ต้อง `node seed-bots.mjs --rewrite` · ติดตั้งเครื่องใหม่ดู [14](14-Prerequisite-ย้ายขึ้น-Production.md)
+
 ## 6. Git และการอัปเดตจากต้นทาง
 
 | งาน | คำสั่ง |

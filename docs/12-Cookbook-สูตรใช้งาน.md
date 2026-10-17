@@ -165,7 +165,18 @@ node tools\yt-digest.mjs "<url>" --engine notebooklm                            
 4. ถ้าบอทควรเรียกเครื่องมือนี้ในงานประจำ ให้เพิ่มใน prompt ของ `seed-bots.mjs` แล้ว `--rewrite` (สูตร 8)
 5. ถ้าต้องให้เครื่อง Windows ทำงานแทน (เช่น yt-dlp) ใช้แบบคิวไฟล์เหมือน `youtube_digest`: เขียนคำขอใน `/news/...`, ให้ `Settings.cs` หยิบใน loop 15 วินาที แล้วเขียนผลกลับ
 
+## 15. ปรับแนวเขียน (brand voice) ของบอท
+
+1. แก้ [ihc-press-brand-voice.md](ihc-press-brand-voice.md) ส่วนที่อยู่ระหว่าง `bot-voice:start/end` (นักข่าวและ บก.ต้นฉบับ) หรือ `bot-social:start/end` (ฝ่ายโซเชียล)
+2. ถ้าเพิ่มหรือลบคำต้องห้าม ให้แก้ `VOICE_LINT` ใน `newsdesk\server.mjs` ให้ตรงกัน แล้ว `node newsdesk\server.mjs --selftest`
+3. คัดลอก docs เข้ารีโป แล้ว `node seed-bots.mjs --dump %TEMP%\bots.json` (ดูก่อน) → `node seed-bots.mjs --rewrite` (แอปต้องเปิดแบบ dev) · ⚠ `--rewrite` ทับคำสั่งที่แก้ในแอปเอง ถ้าเคยแก้ในแอป ให้เทียบกับ dump ก่อน
+4. ถ้าแก้ server.mjs: publish แอปแล้ว `wsl -d Ubuntu-24.04 -- docker restart botpress-newsdesk`
+
 ## 14. ทำภาพข่าวพร้อมโพสต์ (artwork)
+
+**ในแอป (ปกติ):** ข่าวที่ถึง "รอ บก.บห." ได้ภาพ 3 ขนาดเองภายใน ~30 วินาที · เปิดข่าวในโต๊ะข่าว ส่วน "ภาพข่าว" เลือก ข่าวทั่วไป / ข่าวด่วน / การ์ดสรุป แล้วกด "สร้างใหม่" (แบบที่เลือกเองจะถูกใช้ต่อแม้ระบบสร้างใหม่เมื่อพาดหัวเปลี่ยน) · คลิกภาพเพื่อดูเต็ม · "เปิดโฟลเดอร์" เพื่อเอาไฟล์ไปโพสต์
+
+**จากคำสั่ง:**
 
 1. ดู id ข่าวในโต๊ะข่าว (เช่น `20261014-01`)
 2. `cd D:\SalmonRK\BotPress\iHC-Press` แล้ว `node tools\news-art\render.mjs --story 20261014-01` → ได้ 16:9, 1:1, 4:5 ใน `D:\AI-ART\BotPress\data\news\art\20261014-01\`

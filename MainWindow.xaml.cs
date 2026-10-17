@@ -26,6 +26,8 @@ public partial class MainWindow : Window
         _ = Task.Run(async () => { while (true) { await Task.Delay(15000); try { await Monitor.LlmWatchdog(); } catch { } } });
         // YouTube clips the bots asked for (newsdesk tool youtube_digest) are summarised here, on the host that has yt-dlp/NotebookLM
         _ = Task.Run(async () => { while (true) { await Task.Delay(15000); try { await Settings.ProcessYtQueue(); } catch { } } });
+        // news artwork for stories that reached ready/published (tools/news-art/render.mjs --pending; nothing to do = no browser started)
+        _ = Task.Run(async () => { while (true) { await Task.Delay(30000); try { await Newsdesk.ProcessArt(); } catch { } } });
     }
 
     [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
@@ -64,6 +66,8 @@ public partial class MainWindow : Window
         var ui = Environment.GetEnvironmentVariable("BOTPRESS_UI_DIR") is { Length: > 0 } dev ? dev : Path.Combine(AppContext.BaseDirectory, "ui");
         var core = Web.CoreWebView2;
         core.SetVirtualHostNameToFolderMapping("botpress.example", ui, CoreWebView2HostResourceAccessKind.DenyCors);
+        Directory.CreateDirectory(Newsdesk.ArtDir); // rendered news artwork (PNG) for the board and the story reader
+        core.SetVirtualHostNameToFolderMapping(Newsdesk.ArtHost, Newsdesk.ArtDir, CoreWebView2HostResourceAccessKind.DenyCors);
         core.Settings.AreDefaultContextMenusEnabled = _devtoolsPort > 0;
         core.Settings.IsStatusBarEnabled = false;
         core.Settings.AreBrowserAcceleratorKeysEnabled = _devtoolsPort > 0;
@@ -203,6 +207,9 @@ public partial class MainWindow : Window
             case "rk": return await RakazoClient.Call(Arg("path"), args?["input"]);
             case "news.list": return await Task.Run(Newsdesk.List);
             case "news.folder": Newsdesk.Folder(); return null;
+            case "art.get": return Newsdesk.Art(Arg("id"));
+            case "art.render": return await Newsdesk.RenderArt(Arg("id"), args?["variant"]?.GetValue<string>());
+            case "art.folder": Newsdesk.ArtFolder(Arg("id")); return null;
             case "settings.profiles": return await Settings.Profiles();
             case "settings.models": return await Settings.Models(Arg("url"));
             case "settings.profile.save": return Settings.SaveProfile(args!["profile"]!);

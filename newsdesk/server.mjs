@@ -121,6 +121,39 @@ function loadToken(dir) {
   return t;
 }
 
+// ---------- iHC-Press brand voice (docs/ihc-press-brand-voice.md, "Avoid") ----------
+// Phrases that make Thai read like a translation or like AI writing. update_story and get_story only REPORT them, never refuse:
+// some are fine in a quote or a product name, so the copy editor decides. Keep this list in step with the doc.
+const VOICE_LINT = [
+  [/(?:ได้)?ทำการ/g, "ทำการ / ได้ทำการ → ใช้กริยาตรง"],
+  [/ถูก(?:นำเสนอ|พัฒนา|ออกแบบ|เปิดตัว|ประกาศ|สร้าง|นำมา|นำไป|ฝึก|ใช้งาน|ติดตั้ง)/g, "ถูก + กริยา → เขียนแบบประธานทำกริยา"],
+  [/ครอบครัว/g, "ครอบครัว (family ของโมเดลหรือผลิตภัณฑ์) → ตระกูล หรือ รุ่น"],
+  [/การจัดจำหน่าย/g, "การจัดจำหน่าย (deployment) → การนำไปใช้ / การเปิดใช้"],
+  [/ในแง่ของ|ในส่วนของ|ในการที่จะ/g, "ในแง่ของ / ในส่วนของ / ในการที่จะ → เขียนตรง ๆ"],
+  [/ในยุคดิจิทัล|ปฏิวัติวงการ|พลิกโฉม|ก้าวสำคัญ|เป็นที่น่าสนใจว่า|โดยสรุปแล้ว/g, "สำนวนแบบ AI → บอกข้อเท็จจริงตรง ๆ"],
+  [/สุดล้ำ|เหนือชั้น|ห้ามพลาด|ดีที่สุด|เร็วที่สุด|แรงที่สุด/g, "คำโฆษณา → ใช้ตัวเลขหรือผลทดสอบ (ยกเว้นในคำพูดของแหล่งข่าว)"],
+  [/ไม(?=\s|ได้|มี|ใช่|ต้อง|เคย|ละ|ค่อย|ควร|สามารถ|เกิน|ถึง|ให้)/g, "\"ไม\" ไม่มีไม้เอก → ไม่"],
+  [/(?<![A-Za-z0-9][ -]?)(?<!\d[./-])\b20[0-3]\d\b/g, "ปี ค.ศ. → พ.ศ. (เช่น 2026 → 2569) ยกเว้นปีในชื่อผลิตภัณฑ์หรือชื่องาน"],
+  [/!/g, "\"!\" ในตัวข่าว → ตัดออก"],
+  [/[\u0E01-\u0E5B]\s*:\s*[\u0E01-\u0E5B]/g, "\":\" กลางประโยคภาษาไทย → แยกเป็นประโยค"],
+  [/\p{Extended_Pictographic}/gu, "อีโมจิในตัวข่าว → ตัดออก (ใช้ได้เฉพาะช่อง social)"],
+];
+export function voiceLint(text) {
+  if (!text) return [];
+  const out = [];
+  for (const [re, tip] of VOICE_LINT) {
+    const hits = [...new Set(text.match(re) || [])];
+    if (hits.length) out.push(`${tip} (พบ: ${hits.slice(0, 3).map(h => `"${h.trim()}"`).join(", ")})`);
+  }
+  const english = text.match(/\([A-Za-z][^()\n]{1,60}\)/g) || [];
+  if (english.length > 2) out.push(`วงเล็บภาษาอังกฤษ ${english.length} ที่ → เก็บไว้ไม่เกิน 2 ที่ เฉพาะคำที่ผู้อ่านน่าจะค้นต่อ`);
+  const openers = text.split(/\n\s*\n/).map(x => x.trim()).filter(x => /^(นอกจากนี้|อย่างไรก็ตาม|ทั้งนี้)/.test(x));
+  if (openers.length > 1) out.push(`เปิดย่อหน้าด้วย นอกจากนี้ / อย่างไรก็ตาม / ทั้งนี้ ${openers.length} ย่อหน้า → เปลี่ยนวิธีเปิด`);
+  if (/ซึ่ง[^\n]{0,80}ซึ่ง/.test(text)) out.push("\"ซึ่ง\" 2 ครั้งในประโยคเดียว → แยกประโยค");
+  return out;
+}
+const voiceNote = list => list.length ? `\nข้อสังเกตภาษา (แนวเขียน iHC-Press · ไม่บังคับ แต่ บก.ต้นฉบับ ควรแก้ก่อนส่ง ready):\n${list.map((x, i) => `${i + 1}) ${x}`).join("\n")}` : "";
+
 // ---------- story helpers ----------
 const find = (d, a) => {
   const id = str(a, "id", 40, { req: true });
@@ -189,7 +222,9 @@ const TOOLS = {
     inputSchema: S({ id: ID }, ["id"]),
     run: (d, a) => {
       const s = find(d, a), out = { ...s, nextStatuses: NEXT[s.status] };
-      return { text: JSON.stringify(out, null, 1) + `\nขั้นถัดไปที่ทำได้: ${nextOf(s.status)}`, data: out };
+      const voice = /^(drafting|editing)$/.test(s.status) ? voiceLint(`${s.headline}\n\n${s.body}`) : [];
+      if (voice.length) out.voice = voice;
+      return { text: JSON.stringify(out, null, 1) + `\nขั้นถัดไปที่ทำได้: ${nextOf(s.status)}` + voiceNote(voice), data: out };
     },
   },
   update_story: {
@@ -235,8 +270,9 @@ const TOOLS = {
         s.history.push({ at, by, from, to: to || from,
           note: [note, fields.length && `แก้ไข: ${fields.join(", ")}`, cleared && `ล้างผลตรวจเดิม: ${cleared}`].filter(Boolean).join(" | ") });
       });
-      return { text: `อัปเดต ${s.id} แล้ว — สถานะ ${s.status}${to ? ` (จาก ${from})` : ""} · แก้: ${fields.join(", ") || "-"} · ขั้นถัดไป: ${nextOf(s.status)}`,
-        data: { id: s.id, status: s.status, from, changed: fields, updatedAt: at } };
+      const voice = voiceLint([f.headline, f.body].filter(Boolean).join("\n\n"));
+      return { text: `อัปเดต ${s.id} แล้ว — สถานะ ${s.status}${to ? ` (จาก ${from})` : ""} · แก้: ${fields.join(", ") || "-"} · ขั้นถัดไป: ${nextOf(s.status)}` + voiceNote(voice),
+        data: { id: s.id, status: s.status, from, changed: fields, updatedAt: at, ...(voice.length ? { voice } : {}) } };
     },
   },
   publish_story: {
@@ -684,6 +720,19 @@ async function selftest() {
     assert.ok(!fs.existsSync(path.join(dir, "stories.json.tmp")));
     const r = callTool(again, "pitch_story", { by: "x", title: "t", beat: "ai", angle: "a" }).structuredContent.result.id;
     assert.equal(r, `20261005-${String(desk.db.seq["20261005"] + 1).padStart(2, "0")}`);
+  });
+  await T("voice lint: flags translation-style Thai, leaves clean copy, product years and ไมโคร- words alone", () => {
+    const bad = voiceLint("Google ได้ทำการเปิดตัวโมเดลจากครอบครัว Gemma ซึ่งถูกพัฒนาขึ้นในปี 2026 โดยไมละเมิดความเป็นส่วนตัว!\n\nนอกจากนี้ ก\n\nนอกจากนี้ ข (on-device) (social engineering) (phishing)");
+    for (const re of [/ทำการ/, /ถูก \+ กริยา/, /ครอบครัว/, /ไม่มีไม้เอก/, /ค\.ศ\./, /"!"/, /วงเล็บภาษาอังกฤษ 3 ที่/, /นอกจากนี้ \/ อย่างไรก็ตาม/]) assert.ok(bad.some(x => re.test(x)), `missed ${re}`);
+    assert.deepEqual(voiceLint("Google เปิดตัว Gemma รุ่นใหม่ในงาน SICW 2026 เมื่อ 14 ต.ค. 2569 ไมโครซอฟท์ยังไม่ให้ความเห็น เพื่อน ๆ ใช้ได้ในไทยแล้ว"), []);
+    assert.deepEqual(voiceLint(""), []);
+    const Z = pitch({ title: "ภาษา" }); mv(Z, "assigned", { reporter: "นักข่าวเอ" }); mv(Z, "drafting");
+    const r = call("update_story", { id: Z, by: "นักข่าวเอ", headline: "เปิดตัวสุดล้ำ", body: "ได้ทำการทดสอบ" });
+    assert.ok(!r.isError && /ข้อสังเกตภาษา[\s\S]*ทำการ[\s\S]*คำโฆษณา/.test(r.content[0].text)); // reported, never refused
+    assert.ok(r.structuredContent.result.voice.length === 2);
+    assert.match(call("get_story", { id: Z }).content[0].text, /ข้อสังเกตภาษา/);
+    const clean = call("update_story", { id: Z, by: "นักข่าวเอ", headline: "Google เปิดตัว Gemma", body: "Google เปิดตัว Gemma รุ่นใหม่" });
+    assert.ok(!/ข้อสังเกตภาษา/.test(clean.content[0].text) && !clean.structuredContent.result.voice);
   });
   await T("commit rolls memory back when the disk write fails; internal errors say report to a human, don't retry", () => {
     const d2 = openDesk(tmp(), () => t); dirs.push(d2.dir);

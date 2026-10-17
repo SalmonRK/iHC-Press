@@ -279,6 +279,20 @@ svg.i { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-widt
 .stale-tag { color: var(--warn); }
 .desk-sum { cursor: pointer; margin: 8px 0 4px; }
 .reader-sec { margin-top: 18px; line-height: 1.65; }
+/* news artwork: board thumbnail, reader grid, full-size viewer */
+.story-art { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 2px; margin-bottom: 10px; background: var(--sunken); }
+.art-grid { display: grid; grid-template-columns: 16fr 9fr 7.2fr; gap: 10px; align-items: start; }
+.art-thumb { position: relative; padding: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--sunken); cursor: zoom-in; }
+.art-thumb img { display: block; width: 100%; height: auto; }
+.art-thumb span { position: absolute; left: 6px; bottom: 6px; padding: 2px 8px; border-radius: 999px; background: rgba(0,0,0,.65); color: #fff; font-size: 11.5px; }
+.art-thumb:hover, .art-thumb:focus-visible { border-color: var(--navy); }
+.art-info { margin-top: 8px; font-size: 12.5px; }
+.art-actions { gap: 10px; margin-top: 12px; align-items: center; }
+.art-seg { display: inline-flex; background: var(--elev); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.art-seg button { border: 0; background: none; padding: 5px 12px; border-radius: 999px; cursor: pointer; color: var(--muted); font-size: 12.5px; }
+.art-seg button.on { background: var(--navy); color: var(--on-navy); }
+.art-full { display: block; max-width: 100%; max-height: calc(100vh - 180px); margin: 14px auto 0; border-radius: 6px; }
+@media (max-width: 720px) { .art-grid { grid-template-columns: 1fr 1fr; } }
 .reader-sec h3 { margin: 0 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--line); font-size: 12.5px; letter-spacing: .06em; color: var(--muted); }
 .reader-sec .md { font-size: 16px; line-height: 1.75; max-width: 70ch; }
 .modal h2.headline { font-size: 26px; font-weight: 800; line-height: 1.25; letter-spacing: -.3px; }

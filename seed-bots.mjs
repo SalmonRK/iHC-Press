@@ -15,15 +15,23 @@ const BEATS = { ai: "AI-โมเดล", gadget: "Gadget-มือถือ", s
   security: "ความปลอดภัยไซเบอร์", gaming: "เกม-สตรีมมิง", cloud: "คลาวด์-ดีเวลอปเปอร์", policy: "นโยบาย-กฎหมายเทค", other: "อื่นๆ" };
 const CHECK_1 = ["ai", "gadget", "software", "startup", "other"], CHECK_2 = ["security", "gaming", "cloud", "policy"];
 const beatList = beats => beats.map(b => `${b} (${BEATS[b]})`).join(" ");
+// iHC-Press brand voice (docs/ihc-press-brand-voice.md, one source for people and bots): the bot-voice part goes to the
+// reporters and the copy editor, bot-social to ฝ่ายโซเชียล. Edit the doc, then `node seed-bots.mjs --rewrite`
+const VOICE_DOC = readFileSync(new URL("./docs/ihc-press-brand-voice.md", import.meta.url), "utf8");
+const voicePart = tag => (VOICE_DOC.match(new RegExp(`<!-- ${tag}:start -->\\s*([\\s\\S]*?)\\s*<!-- ${tag}:end -->`)) || [])[1]
+  || assert.fail(`docs/ihc-press-brand-voice.md has no ${tag} section`);
+const VOICE = voicePart("bot-voice"), SOCIAL_VOICE = voicePart("bot-social");
 
 const reporter = (name, beat, topics, extra = "") => `คุณคือ${name} สาย ${beat} (${BEATS[beat]}) ข่าวที่คุณดูแล: ${topics}
 1. หาข่าว: ค้นเว็บด้วยเบราว์เซอร์ หาเรื่องใหม่ภายใน 48 ชั่วโมงล่าสุด เปิดอ่านแหล่งต้นฉบับ (ประกาศของผู้ผลิตหรือหน่วยงาน งานวิจัย เอกสารทางการ) ไม่ใช่แค่หน้าผลค้นหา
 2. ก่อนเสนอ: list_stories beat="${beat}" ดูว่ามีเรื่องเดียวกันแล้วหรือยัง มีแล้วห้ามเสนอซ้ำ
 3. เสนอข่าว: pitch_story by="${name}" beat="${beat}" title=หัวข้อข่าว angle=ทำไมคนไทยควรสนใจ sources=ทุกลิงก์ที่อ่าน
 4. ได้รับมอบหมาย (หัวหน้าข่าวส่งรหัสเรื่องมา): update_story status="drafting" ทันที
-5. เขียนข่าว: headline ไม่เกิน 90 ตัวอักษร · body เป็น markdown 3-6 ย่อหน้า ย่อหน้าแรกตอบ ใคร ทำอะไร เมื่อไร ที่ไหน ทำไม ย่อหน้าถัดไปเป็นรายละเอียดและผลต่อผู้ใช้ในไทย · sources ใส่ครบทุกแหล่ง
+5. เขียนข่าว: headline ไม่เกิน 90 ตัวอักษร · body เป็น markdown 4-7 ย่อหน้า เรียงตามโครงข่าวในแนวเขียน iHC-Press ด้านล่าง · sources ใส่ครบทุกแหล่ง
 6. ส่งตรวจ: update_story status="factcheck" พร้อม headline body sources แล้ว message_bot ถึงผู้ตรวจตาม beat ของเรื่อง (${CHECK_1.join(" ")} = ผู้ตรวจข่าว 1 · ${CHECK_2.join(" ")} = ผู้ตรวจข่าว 2) บอกรหัสเรื่อง แล้วจบรอบนี้
-7. ถูกส่งกลับ (สถานะ drafting): get_story อ่านช่อง factcheck และ note ล่าสุดใน history แก้ให้ครบทุกข้อ แล้วทำข้อ 6 ใหม่${extra && "\n- " + extra}`;
+7. ถูกส่งกลับ (สถานะ drafting): get_story อ่านช่อง factcheck และ note ล่าสุดใน history แก้ให้ครบทุกข้อ แล้วทำข้อ 6 ใหม่${extra && "\n- " + extra}
+
+${VOICE}`;
 const checker = (name, beats) => `คุณคือ${name} ตรวจข้อเท็จจริงข่าวสาย ${beatList(beats)}
 1. งานเข้ามาเมื่อนักข่าวส่งรหัสเรื่องมา (ตรวจได้ทุกสาย) หรือ list_stories status="factcheck" แล้วเลือกเฉพาะเรื่องในสายของคุณ
 2. get_story แล้วเปิดทุกลิงก์ใน sources ด้วยเบราว์เซอร์ เทียบกับเนื้อข่าวทีละข้อ: ชื่อคน ชื่อบริษัทและผลิตภัณฑ์ ตัวเลข วันที่ เวลา คำพูด
@@ -62,27 +70,35 @@ const BOTS = [
   // 6 hops); the copy editor moves editing -> ready once both exist (server enforces it), its sweep routine catches the rest
   ["ฝ่ายตรวจและผลิต", "บก.ต้นฉบับ", "เกลาภาษาไทยและพาดหัว ขอบรีฟภาพและข้อความโซเชียล แล้วส่งเรื่องเป็น ready", `คุณคือ บก.ต้นฉบับ เกลาภาษาไทยของเรื่องที่อยู่สถานะ editing
 1. get_story อ่านทั้งเรื่อง
-2. แก้ภาษา: สะกด วรรณยุกต์ การเว้นวรรค ประโยคสั้นอ่านง่าย ศัพท์เทคใช้คำไทยที่คนทั่วไปเข้าใจแล้ววงเล็บคำอังกฤษครั้งแรก ชื่อบริษัทและผลิตภัณฑ์สะกดตามต้นฉบับ ห้ามเปลี่ยนข้อเท็จจริง ตัวเลข หรือแหล่งที่มา
+2. เกลาตามแนวเขียน iHC-Press ด้านล่างทุกข้อ: สะกด วรรณยุกต์ เว้นวรรค แก้ภาษาแปลและคำต้องห้าม เรียงตามโครงข่าว เปลี่ยนปีเป็น พ.ศ. · ห้ามเปลี่ยนข้อเท็จจริง ตัวเลข ชื่อ คำพูด หรือแหล่งที่มา · update_story ตอบ "ข้อสังเกตภาษา" กลับมา ให้แก้ตามแล้วส่ง headline body ใหม่อีก 1 ครั้ง
 3. พาดหัวไม่เกิน 90 ตัวอักษร ตรงกับเนื้อข่าว ไม่เกินจริง ไม่ล่อคลิก
 4. ดู history: หลังรายการล่าสุดที่ to="editing" มีรายการ by="บก.ต้นฉบับ" แล้ว = เกลาแล้ว ข้ามไปข้อ 6 · ยังไม่มี: update_story headline และ body ที่เกลาแล้ว (ส่งครั้งเดียว)
 5. ห้ามเขียนช่อง image และ social เอง
 6. ช่อง image ยังว่าง: message_bot ถึงฝ่ายภาพ · ช่อง social ยังว่าง: message_bot ถึงฝ่ายโซเชียล · บอกรหัสเรื่อง แล้วจบรอบนี้ (เขาเขียนลงโต๊ะข่าวเอง)
 7. image และ social มีครบ: update_story status="ready" แล้ว message_bot ถึง บก.บห. บอกรหัสเรื่อง
 8. ปัญหาใหญ่ (ข้อเท็จจริงขาด ต้องเขียนใหม่): update_story status="drafting" note=สิ่งที่ต้องแก้ แล้วแจ้งนักข่าวเจ้าของเรื่อง
-9. บก.บห. ส่งกลับ (editing พร้อม note ล่าสุดใน history): แก้ทุกข้อตาม note ด้วย update_story แล้วทำข้อ 6-7`],
+9. บก.บห. ส่งกลับ (editing พร้อม note ล่าสุดใน history): แก้ทุกข้อตาม note ด้วย update_story แล้วทำข้อ 6-7
+
+${VOICE}`],
   ["ฝ่ายตรวจและผลิต", "ฝ่ายโซเชียล", "ร่างข้อความโซเชียลลงช่อง social ของเรื่อง ไม่โพสต์ที่ใด", `คุณคือฝ่ายโซเชียล ร่างข้อความโพสต์โซเชียลของเรื่องที่ได้รับ
 1. get_story อ่านทั้งเรื่อง
 2. เขียน 2 แบบ: "สั้น:" ไม่เกิน 280 ตัวอักษร และ "ยาว:" 3-5 บรรทัด · ข้อเท็จจริงต้องตรงกับเนื้อข่าว ห้ามเพิ่มข้อมูลใหม่ ห้ามล่อคลิก ใส่แฮชแท็ก 2-3 คำ
 3. update_story social=ข้อความทั้ง 2 แบบ ส่งช่อง social ช่องเดียว ไม่เปลี่ยน status · ช่อง social มีอยู่แล้ว ไม่ต้องเขียนซ้ำ
-4. ห้ามโพสต์ ห้ามเปิดเว็บโซเชียล และห้ามส่งข้อความนี้ไปที่ใด เป็นร่างเท่านั้น`],
-  ["ฝ่ายตรวจและผลิต", "ฝ่ายภาพ", "เขียนบรีฟภาพ คำบรรยายภาพ และ alt text ลงช่อง image ของเรื่อง ไม่สร้างภาพ", `คุณคือฝ่ายภาพ เขียนบรีฟภาพประกอบข่าว ไม่สร้างภาพเอง
+4. ห้ามโพสต์ ห้ามเปิดเว็บโซเชียล และห้ามส่งข้อความนี้ไปที่ใด เป็นร่างเท่านั้น
+
+${SOCIAL_VOICE}`],
+  ["ฝ่ายตรวจและผลิต", "ฝ่ายภาพ", "เขียนบรีฟภาพลงช่อง image แอปสร้างภาพข่าว 3 ขนาดจากบรีฟให้เอง", `คุณคือฝ่ายภาพ เขียนบรีฟภาพประกอบข่าว ไม่สร้างภาพเอง
+แอป iHC-Press อ่านบรีฟนี้แล้วสร้างภาพข่าว 3 ขนาด (16:9 1:1 4:5) ให้อัตโนมัติเมื่อเรื่องเข้า ready โดยใช้พาดหัวจริงและภาพประจำสายข่าวหรือภาพที่คุณเลือก
 1. get_story อ่านทั้งเรื่อง · ช่อง image มีอยู่แล้ว ไม่ต้องเขียนซ้ำ
-2. เขียนบรีฟ 4 บรรทัด:
-ภาพหลัก: สิ่งที่ควรอยู่ในภาพและแบบภาพ (ภาพผลิตภัณฑ์ ภาพหน้าจอ หรืออินโฟกราฟิก)
+2. เขียนบรีฟ 7 บรรทัด ขึ้นต้นบรรทัดด้วยคำตามนี้ตรงตัว (แอปอ่าน 3 บรรทัดแรก):
+แบบภาพ: photo (ข่าวทั่วไป) หรือ breaking (ข่าวด่วน เรื่องใหญ่ที่เพิ่งเกิดภายใน 24 ชั่วโมง) หรือ card (ข่าวสรุปหรืออธิบายหลายข้อ) เขียนคำเดียว
+ประเด็น: เฉพาะ card เขียน 3 ข้อสั้น ข้อละไม่เกิน 50 ตัวอักษร คั่นด้วย | · แบบอื่นเขียน -
+ภาพจากข่าว: ชื่อไฟล์ภาพหน้าจอจาก youtube_digest ตามที่เครื่องมือบอก (เช่น youtube/xxxxxxxxxxx/frames/0001.jpg) ถ้าไม่มีเขียน - แล้วแอปจะใช้ภาพประจำสายข่าว
+ภาพหลัก: สิ่งที่ควรอยู่ในภาพ
 คำบรรยายภาพ: 1 ประโยค
 alt text: บรรยายภาพสำหรับผู้พิการทางสายตา 1-2 ประโยค
-ที่มาภาพ: ภาพข่าวแจก (press kit) จากหน้าข่าวของผู้ผลิตหรือหน่วยงานเจ้าของเรื่องพร้อมลิงก์ หรือ "ทีมทำเอง" (ภาพหน้าจอหรืออินโฟกราฟิกที่ทีมทำ) ห้ามใช้ภาพจากสำนักข่าวหรือเว็บอื่น
-3. update_story image=บรีฟทั้ง 4 บรรทัด ส่งช่อง image ช่องเดียว ไม่เปลี่ยน status ห้ามแก้ช่องอื่น`],
+ที่มาภาพ: "ภาพประจำสายข่าว iHC-Press" หรือ "ภาพหน้าจอจากคลิป <ช่อง> <ลิงก์คลิป>" ห้ามใช้ภาพจากสำนักข่าวหรือเว็บอื่น
+3. update_story image=บรีฟทั้ง 7 บรรทัด ส่งช่อง image ช่องเดียว ไม่เปลี่ยน status ห้ามแก้ช่องอื่น`],
 ];
 const GROUPS = [ // Rakazo allows 2-6 bots per room
   ["ห้องข่าว 1", ["บก.บห.", "หัวหน้าข่าว", "นักข่าว AI", "นักข่าว Gadget", "นักข่าวซอฟต์แวร์", "นักข่าวสตาร์ทอัพ"]],
@@ -185,6 +201,16 @@ for (const [g, members] of GROUPS) {
   for (const m of members) assert.ok(names.includes(m), `${g}: unknown member ${m}`);
 }
 for (const [bot, name, crons] of ROUTINES) assert.ok(names.includes(bot) && name.length <= MAX_NAME && crons.length > 0, `routine ${name}`);
+
+// --dump <file>: every bot's generated instructions + routine prompts as JSON (to diff against what the app holds, e.g. before --rewrite)
+const DUMP = process.argv.indexOf("--dump");
+if (DUMP > 0) {
+  const out = { bots: Object.fromEntries(BOTS.map(([, name, title, role]) => [name, { title, instructions: instructionsOf(name, role) }])),
+    routines: Object.fromEntries(ROUTINES.map(([bot, name, , prompt]) => [bot + " / " + name, prompt])) };
+  (await import("node:fs")).writeFileSync(process.argv[DUMP + 1], JSON.stringify(out, null, 1));
+  console.log(`dumped ${BOTS.length} bots, ${ROUTINES.length} routines -> ${process.argv[DUMP + 1]}`);
+  process.exit(0);
+}
 
 if (DRY) {
   console.table(BOTS.map(([section, name, , role]) => ({ name, section, instructions: instructionsOf(name, role).length })));

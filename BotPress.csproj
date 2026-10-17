@@ -22,6 +22,7 @@
     <None Include="ui\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="stt.py" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <!-- run by the app at runtime, so the install (publish dir) works without the repo: newsdesk MCP server, WSL control, YouTube digests -->
+    <None Include="tools\news-art\render.mjs;tools\news-art\template.html;tools\news-art\assets\*.jpg;tools\news-art\fonts\*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="newsdesk\server.mjs;newsdesk\sources-default.json;botpress.sh;tools\yt-digest.mjs;tools\paths.mjs" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>

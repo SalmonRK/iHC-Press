@@ -189,7 +189,7 @@ public static class Settings
     }
 
     // ---------- tools for YouTube / NotebookLM ----------
-    static async Task<(int code, string output)> Exec(string exe, string args, int ms = 15000, string? cwd = null)
+    internal static async Task<(int code, string output)> Exec(string exe, string args, int ms = 15000, string? cwd = null)
     {
         try
         {
