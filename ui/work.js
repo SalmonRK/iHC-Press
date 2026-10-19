@@ -324,8 +324,8 @@
   // ---------- 6. usage and cost per bot (Rakazo usage records) ----------
   // Synthetic list price of the cloud model (GET /openai/v1/models, checked 2026-10-04: hf:zai-org/GLM-5.3-Flash $0.15 in /
   // $0.50 out per 1M tokens) in nano-USD per token so sums stay integers. The subscription is flat, but each call spends the
-  // pack's weekly credit at list price, so this is "credit used". Local Gemma's records carry model "gemma4"; any other = cloud,
-  // priced only for Synthetic ids ("hf:..."): BCAiRouter (bcai/*) routes to free providers, so it costs nothing here.
+  // pack's weekly credit at list price, so this is "credit used". Cloud = Synthetic ids ("hf:...") and BCAiRouter (bcai/*);
+  // any other model (gemma4, Ollama/OpenThai from llm.json) is Local. Only Synthetic is priced: BCAiRouter routes to free providers.
   const SYN_PRICE = { in: 150, out: 500 };
   const usd = nano => "$" + (nano / 1e9).toFixed(nano < 1e7 ? 4 : 2); // display only
   const fmt = n => n >= 1e6 ? (n / 1e6).toFixed(2) + "M" : n >= 1e3 ? (n / 1e3).toFixed(1) + "K" : String(n);
@@ -335,7 +335,7 @@
     const [recs, sum] = await Promise.all([rk("usage/list"), rk("usage/summary")]);
     const per = new Map(), tot = { local: 0, cloud: 0, nano: 0 };
     for (const r of recs) {
-      const cloud = r.model !== "gemma4", tokens = r.inputTokens + r.outputTokens;
+      const cloud = /^(hf:|bcai\/)/.test(r.model || ""), tokens = r.inputTokens + r.outputTokens;
       const nano = r.model?.startsWith("hf:") ? r.inputTokens * SYN_PRICE.in + r.outputTokens * SYN_PRICE.out : 0;
       const row = per.get(r.botId) || { local: 0, cloud: 0, nano: 0, calls: 0 };
       row[cloud ? "cloud" : "local"] += tokens; row.nano += nano; row.calls++;
